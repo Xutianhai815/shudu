@@ -36,6 +36,16 @@ test('layout keeps the keypad inside a short portrait viewport', () => {
   assert.ok(lastKey.y + lastKey.height <= 667 - layout.margin);
 });
 
+test('layout anchors gameplay input controls near the bottom edge', () => {
+  const layout = createLayout(430, 932, { topInset: 52 });
+  const lastKey = layout.keypad.keys.at(-1);
+  const firstTool = layout.tools[0];
+
+  assert.ok(lastKey.y + lastKey.height >= 932 - layout.margin - 1);
+  assert.ok(firstTool.y + firstTool.height < layout.keypad.y);
+  assert.ok(layout.board.y + layout.board.size < firstTool.y);
+});
+
 test('layout starts below the reserved top safe area', () => {
   const layout = createLayout(430, 932, { topInset: 96 });
 
@@ -46,16 +56,16 @@ test('layout starts below the reserved top safe area', () => {
 
 test('victory layout stays inside a short portrait viewport', () => {
   const layout = createLayout(375, 667);
-  const { panel, restart, next, home } = layout.victory;
+  const { panel, campaignNext, restart, next } = layout.victory;
 
   assert.ok(panel.y + panel.height <= 667);
+  assert.ok(campaignNext.y + campaignNext.height <= panel.y + panel.height);
   assert.ok(restart.y + restart.height <= panel.y + panel.height);
   assert.ok(next.y + next.height <= panel.y + panel.height);
-  assert.ok(home.y + home.height <= panel.y + panel.height);
+  assert.ok(campaignNext.y + campaignNext.height <= 667);
   assert.ok(restart.y + restart.height <= 667);
   assert.ok(next.y + next.height <= 667);
-  assert.ok(home.y + home.height <= 667);
-  [restart, next, home].forEach((button) => {
+  [campaignNext, restart, next].forEach((button) => {
     assert.ok(button.x >= panel.x);
     assert.ok(button.x + button.width <= panel.x + panel.width);
   });
@@ -83,23 +93,41 @@ test('hitTest maps tool buttons to actions', () => {
   });
 });
 
-test('hitTest maps victory overlay buttons to restart, next, and home actions', () => {
+test('hitTest maps campaign victory overlay to next only', () => {
   const layout = createLayout(430, 932);
-  const restartButton = layout.victory.restart;
-  const nextButton = layout.victory.next;
-  const homeButton = layout.victory.home;
+  const campaignNext = layout.victory.campaignNext;
+  const practiceOnlyRestartEdge = layout.victory.restart;
 
-  assert.deepEqual(hitTest(layout, restartButton.x + restartButton.width / 2, restartButton.y + restartButton.height / 2, true), {
-    type: 'victory',
-    action: 'restart',
-  });
-  assert.deepEqual(hitTest(layout, nextButton.x + nextButton.width / 2, nextButton.y + nextButton.height / 2, true), {
+  assert.deepEqual(hitTest(layout, campaignNext.x + campaignNext.width / 2, campaignNext.y + campaignNext.height / 2, true), {
     type: 'victory',
     action: 'next',
   });
-  assert.deepEqual(hitTest(layout, homeButton.x + homeButton.width / 2, homeButton.y + homeButton.height / 2, true), {
+  assert.notEqual(hitTest(layout, campaignNext.x + 4, campaignNext.y + campaignNext.height / 2, true).action, 'restart');
+  assert.equal(
+    hitTest(layout, practiceOnlyRestartEdge.x + 2, practiceOnlyRestartEdge.y + practiceOnlyRestartEdge.height / 2, true),
+    null,
+  );
+});
+
+test('hitTest maps practice victory overlay to replay and difficulty actions', () => {
+  const layout = createLayout(430, 932);
+  const restartButton = layout.victory.restart;
+  const nextButton = layout.victory.next;
+
+  assert.deepEqual(
+    hitTest(layout, restartButton.x + restartButton.width / 2, restartButton.y + restartButton.height / 2, true, {
+      victoryMode: 'practice',
+    }),
+    {
+      type: 'victory',
+      action: 'restart',
+    },
+  );
+  assert.deepEqual(hitTest(layout, nextButton.x + nextButton.width / 2, nextButton.y + nextButton.height / 2, true, {
+    victoryMode: 'practice',
+  }), {
     type: 'victory',
-    action: 'home',
+    action: 'next',
   });
 });
 
@@ -107,20 +135,20 @@ test('victory layout has enough vertical room for derust report', () => {
   const layout = createLayout(430, 932);
 
   assert.ok(layout.victory.panel.height >= 330);
+  assert.ok(layout.victory.campaignNext.y > layout.victory.panel.y + 280);
   assert.ok(layout.victory.restart.y > layout.victory.panel.y + 280);
   assert.ok(layout.victory.next.y > layout.victory.panel.y + 280);
-  assert.ok(layout.victory.home.y > layout.victory.panel.y + 280);
 });
 
-test('victory layout keeps three action buttons inside compact panels', () => {
+test('victory layout keeps campaign and practice action buttons inside compact panels', () => {
   const layout = createLayout(320, 568);
-  const { panel, restart, next, home } = layout.victory;
+  const { panel, campaignNext, restart, next } = layout.victory;
 
   assert.ok(panel.y + panel.height <= 568);
-  assert.ok(restart.width >= 68);
+  assert.ok(campaignNext.width >= 180);
+  assert.ok(restart.width >= 108);
   assert.ok(next.x > restart.x + restart.width);
-  assert.ok(home.x > next.x + next.width);
-  [restart, next, home].forEach((button) => {
+  [campaignNext, restart, next].forEach((button) => {
     assert.ok(button.y + button.height <= panel.y + panel.height);
     assert.ok(button.x >= panel.x);
     assert.ok(button.x + button.width <= panel.x + panel.width);

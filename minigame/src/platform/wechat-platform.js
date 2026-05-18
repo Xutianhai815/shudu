@@ -38,6 +38,27 @@ function createWechatPlatform(wxLike) {
       return statusBarHeight > 0 ? statusBarHeight + 12 : 0;
     },
 
+    getGameplayTopInset(systemInfo, fallbackTopInset) {
+      const statusBarHeight = Number.isFinite(systemInfo && systemInfo.statusBarHeight)
+        ? systemInfo.statusBarHeight
+        : 0;
+
+      if (typeof api.getMenuButtonBoundingClientRect === 'function') {
+        try {
+          const rect = api.getMenuButtonBoundingClientRect();
+          if (rect && Number.isFinite(rect.top)) {
+            const capsuleHeight = Number.isFinite(rect.height) ? rect.height : 32;
+            const backButtonHeight = 44;
+            return Math.max(0, rect.top - (backButtonHeight - capsuleHeight) / 2);
+          }
+        } catch (error) {
+          // Fall back to the content-safe inset when the capsule rect is unavailable.
+        }
+      }
+
+      return Number.isFinite(fallbackTopInset) ? fallbackTopInset : statusBarHeight + 12;
+    },
+
     onTouchStart(callback) {
       if (typeof api.onTouchStart === 'function') {
         api.onTouchStart(callback);

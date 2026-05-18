@@ -13,6 +13,8 @@ test('visual snapshot renderer produces key menu gameplay and victory SVGs', () 
   assert.doesNotMatch(snapshots.menu, /今日报告|今日除锈|累计除锈|今日第一局/);
   assert.match(snapshots.gameplayDebug, /起步热身/);
   assert.equal(/DEV 完成|08:42|Ⅱ/.test(snapshots.gameplayDebug), false);
-  assert.match(snapshots.victory, /大脑除锈完成/);
-  assert.match(snapshots.victory, /\+0\.01%/);
+  assert.match(snapshots.victory, /LAB CLEAR/);
+  assert.match(snapshots.victory, /下一关已解锁/);
+  assert.match(snapshots.victory, /下一关/);
+  assert.doesNotMatch(snapshots.victory, /同难度再来一局|回首页|\+0\.01%/);
 });

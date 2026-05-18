@@ -58,20 +58,26 @@ function createVisualSnapshots() {
     ),
     victory: renderToSvg((ctx) =>
       renderGame(ctx, completedState, victoryLayout, {
-        completionFeedback: createCompletionFeedback(
-          completedState,
-          ['lab-01'],
-          {
-            date: '2026-05-14',
-            completionCount: 1,
-            completedLevelIds: ['lab-01'],
-          },
-          '2026-05-14',
-        ),
+        completionFeedback: {
+          ...createCompletionFeedback(
+            completedState,
+            ['lab-01'],
+            {
+              date: '2026-05-14',
+              completionCount: 1,
+              completedLevelIds: ['lab-01'],
+            },
+            '2026-05-14',
+          ),
+          variant: 'campaign',
+          label: 'LAB CLEAR',
+          title: '第 1 关完成',
+          unlockText: '下一关已解锁',
+          progressText: '1 / 12',
+          subtitle: '大脑已热身，继续挑战下一关。',
+        },
         victoryActions: {
-          restart: '同难度再来一局',
           next: '下一关',
-          home: '回首页',
         },
       }),
     ),
@@ -95,7 +101,6 @@ function createVisualSnapshots() {
         victoryActions: {
           restart: '再练一局',
           next: '换个难度',
-          home: '回首页',
         },
       }),
     ),

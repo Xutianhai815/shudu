@@ -35,9 +35,11 @@ function createMenuLayout(width, height, levels, progressSummary = {}) {
   const compact = height < 760;
   const topY = Math.max(compact ? 42 : 72, normalizeTopInset(topInset, height));
   const titleY = topY;
-  const cardHeight = compact ? 72 : 88;
-  const cardGap = compact ? 10 : 12;
-  const cardLift = compact ? 34 : 42;
+  const cardHeight = compact ? 50 : 54;
+  const cardGap = compact ? 12 : 16;
+  const cardLift = compact ? 58 : 78;
+  const cardWidth = Math.min(width - margin * 2, compact ? 230 : 258);
+  const cardX = (width - cardWidth) / 2;
   const practiceCardY = height - margin - cardHeight - cardLift;
   const campaignCardY = practiceCardY - cardGap - cardHeight;
   const motionReserve = compact
@@ -61,9 +63,9 @@ function createMenuLayout(width, height, levels, progressSummary = {}) {
 
   const modeCards = {
     campaign: {
-      x: margin,
+      x: cardX,
       y: campaignCardY,
-      width: width - margin * 2,
+      width: cardWidth,
       height: cardHeight,
       action: 'campaign',
       title: campaignCopy.title,
@@ -72,9 +74,9 @@ function createMenuLayout(width, height, levels, progressSummary = {}) {
       label: campaignCopy.buttonLabel,
     },
     practice: {
-      x: margin,
+      x: cardX,
       y: practiceCardY,
-      width: width - margin * 2,
+      width: cardWidth,
       height: cardHeight,
       action: 'practice',
       title: practiceCopy.title,

@@ -44,12 +44,11 @@ After importing into WeChat DevTools, verify these items in the simulator:
 - Tapping `重开` asks for confirmation, then clears player-filled digits while keeping fixed clues.
 - Tapping `清除` clears the selected mutable cell.
 - Completing the board shows the victory overlay.
-- Campaign victory `同难度再来一局` restarts within the same difficulty band.
-- Campaign victory `下一关` advances to `LAB-02 九宫巡检`.
-- Campaign victory `回首页` returns to the dual-mode home screen.
+- Campaign victory is a compact `下一关已解锁` overlay with one `下一关` button.
+- Campaign victory `下一关` advances to `LAB-02 九宫巡检`; use the top-left back button to return home.
 - Free practice gameplay shows `换难度`, which returns to difficulty selection and starts a new practice puzzle after choosing a difficulty.
 - Completing a free practice puzzle does not mark campaign levels complete.
-- Free practice victory shows `再练一局`, `换个难度`, and `回首页`.
+- Free practice victory shows `再练一局` and `换个难度`.
 - The board does not show extra variant lines, circles, or arrows in the current basic-play version.
 
 If the WeChat DevTools CLI is enabled later, the project can also be opened from the command line with the DevTools `cli` executable and this folder path.
@@ -67,8 +66,8 @@ The snapshots are written to `artifacts/visual/`:
 - `menu.svg`: dual-mode home screen with `闯关挑战` and `自由练习`.
 - `practiceMenu.svg`: free practice difficulty selector with `入门`, `简单`, `标准`, and `挑战`.
 - `gameplayDebug.svg`: campaign gameplay with the same top bar controls as the playable build.
-- `victory.svg`: campaign victory with `同难度再来一局`, `下一关`, and `回首页`.
-- `practiceVictory.svg`: free practice victory with `再练一局`, `换个难度`, and `回首页`.
+- `victory.svg`: campaign victory with `下一关已解锁` and a single `下一关` button.
+- `practiceVictory.svg`: free practice victory with `再练一局` and `换个难度`.
 
 Use these as a quick visual QA pass before or after opening the project in WeChat DevTools.
 

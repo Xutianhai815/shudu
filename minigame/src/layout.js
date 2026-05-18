@@ -31,19 +31,19 @@ function createLayout(width, height, options = {}) {
   const keypadHeight = compact ? 132 : Math.min(174, Math.max(144, height * 0.19));
   const boardGap = compact ? 8 : 12;
   const bottomGap = compact ? 8 : 12;
-  const bottomStackHeight = bottomGap + toolsHeight + 10 + keypadHeight + margin;
-  const boardSize = Math.min(width - margin * 2, height - (ruleStrip.y + ruleStrip.height + boardGap) - bottomStackHeight);
+  const keypadY = height - margin - keypadHeight;
+  const toolsY = keypadY - 10 - toolsHeight;
+  const boardY = ruleStrip.y + ruleStrip.height + boardGap;
+  const boardSize = Math.max(0, Math.min(width - margin * 2, toolsY - boardY - bottomGap));
   const board = {
     x: margin,
-    y: ruleStrip.y + ruleStrip.height + boardGap,
+    y: boardY,
     size: boardSize,
   };
-  const toolsY = board.y + board.size + bottomGap;
   const tools = buildRowRects(margin, toolsY, width - margin * 2, toolsHeight, 3, 10).map((rect, index) => ({
     ...rect,
     action: ['note', 'restart', 'erase'][index],
   }));
-  const keypadY = toolsY + toolsHeight + 10;
   const keypad = {
     x: margin,
     y: keypadY,
@@ -96,21 +96,24 @@ function createVictoryLayout(width, height) {
   const buttonHeight = 38;
   const panelBottomPadding = 16;
   const buttonY = y + panelHeight - panelBottomPadding - buttonHeight;
-  const buttons = buildRowRects(x + 22, buttonY, panelWidth - 44, buttonHeight, 3, 8);
+  const practiceButtons = buildRowRects(x + 22, buttonY, panelWidth - 44, buttonHeight, 2, 10);
 
   return {
     panel: { x, y, width: panelWidth, height: panelHeight },
+    campaignNext: {
+      x: x + 42,
+      y: buttonY,
+      width: panelWidth - 84,
+      height: buttonHeight,
+      action: 'next',
+    },
     restart: {
-      ...buttons[0],
+      ...practiceButtons[0],
       action: 'restart',
     },
     next: {
-      ...buttons[1],
+      ...practiceButtons[1],
       action: 'next',
-    },
-    home: {
-      ...buttons[2],
-      action: 'home',
     },
   };
 }
@@ -146,7 +149,7 @@ function buildGridRects(x, y, width, height, cols, rows, gap) {
   return rects;
 }
 
-function hitTest(layout, x, y, completed = false) {
+function hitTest(layout, x, y, completed = false, options = {}) {
   if (isInside(layout.backButton, x, y)) {
     return {
       type: 'nav',
@@ -155,7 +158,7 @@ function hitTest(layout, x, y, completed = false) {
   }
 
   if (completed) {
-    const victoryAction = hitTestVictory(layout, x, y);
+    const victoryAction = hitTestVictory(layout, x, y, options.victoryMode);
     if (victoryAction) {
       return victoryAction;
     }
@@ -199,8 +202,11 @@ function hitTest(layout, x, y, completed = false) {
   return null;
 }
 
-function hitTestVictory(layout, x, y) {
-  const buttons = [layout.victory.restart, layout.victory.next, layout.victory.home].filter(Boolean);
+function hitTestVictory(layout, x, y, victoryMode = 'campaign') {
+  const buttons =
+    victoryMode === 'practice'
+      ? [layout.victory.restart, layout.victory.next]
+      : [layout.victory.campaignNext];
   const button = buttons.find((rect) => isInside(rect, x, y));
 
   return button

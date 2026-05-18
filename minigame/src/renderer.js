@@ -257,13 +257,13 @@ function drawMenuModeCards(ctx, modeCards) {
 
     roundRect(ctx, card.x, card.y, card.width, card.height, 22, fill);
     ctx.fillStyle = railColor;
-    roundRect(ctx, card.x + 14, card.y + 16, 6, card.height - 32, 3, railColor);
+    roundRect(ctx, card.x + 12, card.y + 10, 6, card.height - 20, 3, railColor);
 
     ctx.fillStyle = titleColor;
-    ctx.font = minimal ? '950 24px sans-serif' : '950 20px sans-serif';
+    ctx.font = minimal ? '950 33px sans-serif' : '950 20px sans-serif';
     ctx.textAlign = 'left';
     ctx.textBaseline = minimal ? 'middle' : 'alphabetic';
-    ctx.fillText(card.title, card.x + 32, minimal ? card.y + card.height / 2 + 1 : card.y + 27);
+    ctx.fillText(card.title, card.x + 30, minimal ? card.y + card.height / 2 + 1 : card.y + 27);
     ctx.textBaseline = 'alphabetic';
 
     if (card.subtitle) {
@@ -286,7 +286,7 @@ function drawMenuModeCards(ctx, modeCards) {
     ctx.font = '900 22px sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText('›', card.x + card.width - 28, card.y + card.height / 2);
+    ctx.fillText('›', card.x + card.width - 24, card.y + card.height / 2);
     ctx.textAlign = 'left';
     ctx.textBaseline = 'alphabetic';
   });
@@ -642,7 +642,7 @@ function drawVictoryOverlay(ctx, state, layout) {
     ctx.fillStyle = 'rgba(4, 21, 17, 0.58)';
     ctx.fillRect(0, 0, width, height);
 
-    const { panel, restart, next, home } = layout.victory;
+    const { panel } = layout.victory;
     const x = panel.x;
     const y = panel.y;
     const panelGradient = ctx.createLinearGradient(x, y, x + panel.width, y + panel.height);
@@ -657,62 +657,142 @@ function drawVictoryOverlay(ctx, state, layout) {
     roundedPath(ctx, panel.x + 1, panel.y + 1, panel.width - 2, panel.height - 2, 21);
     ctx.stroke();
 
-    roundRect(ctx, x + 22, y + 20, 104, 24, 8, 'rgba(255, 200, 97, 0.15)');
-    ctx.fillStyle = '#ffc861';
-    ctx.font = '900 11px sans-serif';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(feedback.label, x + 74, y + 32);
-
-    ctx.fillStyle = '#f6fff4';
-    ctx.font = '900 24px sans-serif';
-    ctx.fillText(feedback.title, x + panel.width / 2, y + 72);
-
-    ctx.fillStyle = '#ffc861';
-    ctx.font = '950 42px sans-serif';
-    ctx.fillText(feedback.deltaText, x + panel.width / 2, y + 118);
-
-    ctx.fillStyle = 'rgba(246, 255, 244, 0.72)';
-    ctx.font = '850 12px sans-serif';
-    ctx.fillText(feedback.metricLabel, x + panel.width / 2, y + 146);
-
-    drawVictoryDerustStats(ctx, x + 22, y + 164, panel.width - 44, feedback.stats, colors);
-
-    ctx.fillStyle = 'rgba(246, 255, 244, 0.9)';
-    ctx.font = '850 13px sans-serif';
-    wrapText(ctx, feedback.subtitle, x + 28, y + 230, panel.width - 56, 18);
-
-    ctx.fillStyle = 'rgba(246, 255, 244, 0.58)';
-    ctx.font = '800 11px sans-serif';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(feedback.disclaimer, x + panel.width / 2, y + 278);
-
-    drawVictoryButton(
-      ctx,
-      restart.x,
-      restart.y,
-      restart.width,
-      layout.victoryActions.restart,
-      'rgba(246, 255, 244, 0.9)',
-      '#0b241d',
-    );
-    drawVictoryButton(ctx, next.x, next.y, next.width, layout.victoryActions.next, '#ffc861', '#0b241d');
-    drawVictoryButton(
-      ctx,
-      home.x,
-      home.y,
-      home.width,
-      layout.victoryActions.home,
-      'rgba(246, 255, 244, 0.18)',
-      '#f6fff4',
-    );
+    if (layout.modeContext.mode !== 'practice') {
+      drawCampaignVictoryContent(ctx, layout, feedback);
+    } else {
+      drawPracticeVictoryContent(ctx, layout, feedback, colors);
+    }
 
     ctx.textAlign = 'left';
     ctx.textBaseline = 'alphabetic';
   } finally {
     ctx.restore();
   }
+}
+
+function drawCampaignVictoryContent(ctx, layout, feedback) {
+  const { panel, campaignNext } = layout.victory;
+  const x = panel.x;
+  const y = panel.y;
+
+  roundRect(ctx, x + 22, y + 20, 104, 24, 8, 'rgba(255, 200, 97, 0.15)');
+  ctx.fillStyle = '#ffc861';
+  ctx.font = '900 11px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(feedback.label === 'LAB RESULT' ? 'LAB CLEAR' : feedback.label, x + 74, y + 32);
+
+  ctx.fillStyle = '#f6fff4';
+  ctx.font = '950 26px sans-serif';
+  ctx.fillText(feedback.title, x + panel.width / 2, y + 74);
+
+  drawCampaignUnlockBadge(ctx, x + panel.width / 2, y + 140);
+
+  ctx.fillStyle = '#ffc861';
+  ctx.font = '900 17px sans-serif';
+  ctx.fillText(feedback.unlockText, x + panel.width / 2, y + 214);
+
+  ctx.fillStyle = 'rgba(246, 255, 244, 0.68)';
+  ctx.font = '850 12px sans-serif';
+  ctx.fillText(feedback.progressText, x + panel.width / 2, y + 238);
+
+  ctx.fillStyle = 'rgba(246, 255, 244, 0.9)';
+  ctx.font = '850 13px sans-serif';
+  ctx.fillText(feedback.subtitle, x + panel.width / 2, y + 267);
+
+  drawVictoryButton(
+    ctx,
+    campaignNext.x,
+    campaignNext.y,
+    campaignNext.width,
+    layout.victoryActions.next,
+    '#ffc861',
+    '#0b241d',
+  );
+}
+
+function drawCampaignUnlockBadge(ctx, centerX, centerY) {
+  const size = 74;
+  const x = centerX - size / 2;
+  const y = centerY - size / 2;
+  const cell = size / 3;
+
+  roundRect(ctx, x, y, size, size, 18, 'rgba(255, 200, 97, 0.13)');
+  ctx.strokeStyle = 'rgba(255, 200, 97, 0.48)';
+  ctx.lineWidth = 1.5;
+  roundedPath(ctx, x + 0.75, y + 0.75, size - 1.5, size - 1.5, 17);
+  ctx.stroke();
+
+  ctx.strokeStyle = 'rgba(255, 200, 97, 0.22)';
+  ctx.lineWidth = 1;
+  for (let index = 1; index < 3; index += 1) {
+    ctx.beginPath();
+    ctx.moveTo(x + cell * index, y + 10);
+    ctx.lineTo(x + cell * index, y + size - 10);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(x + 10, y + cell * index);
+    ctx.lineTo(x + size - 10, y + cell * index);
+    ctx.stroke();
+  }
+
+  ctx.strokeStyle = '#ffc861';
+  ctx.lineWidth = 5;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  ctx.beginPath();
+  ctx.moveTo(centerX - 19, centerY + 1);
+  ctx.lineTo(centerX - 5, centerY + 16);
+  ctx.lineTo(centerX + 22, centerY - 18);
+  ctx.stroke();
+}
+
+function drawPracticeVictoryContent(ctx, layout, feedback, colors) {
+  const { panel, restart, next } = layout.victory;
+  const x = panel.x;
+  const y = panel.y;
+
+  roundRect(ctx, x + 22, y + 20, 104, 24, 8, 'rgba(255, 200, 97, 0.15)');
+  ctx.fillStyle = '#ffc861';
+  ctx.font = '900 11px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(feedback.label, x + 74, y + 32);
+
+  ctx.fillStyle = '#f6fff4';
+  ctx.font = '900 24px sans-serif';
+  ctx.fillText(feedback.title, x + panel.width / 2, y + 72);
+
+  ctx.fillStyle = '#ffc861';
+  ctx.font = '950 42px sans-serif';
+  ctx.fillText(feedback.deltaText, x + panel.width / 2, y + 118);
+
+  ctx.fillStyle = 'rgba(246, 255, 244, 0.72)';
+  ctx.font = '850 12px sans-serif';
+  ctx.fillText(feedback.metricLabel, x + panel.width / 2, y + 146);
+
+  drawVictoryDerustStats(ctx, x + 22, y + 164, panel.width - 44, feedback.stats, colors);
+
+  ctx.fillStyle = 'rgba(246, 255, 244, 0.9)';
+  ctx.font = '850 13px sans-serif';
+  wrapText(ctx, feedback.subtitle, x + 28, y + 230, panel.width - 56, 18);
+
+  ctx.fillStyle = 'rgba(246, 255, 244, 0.58)';
+  ctx.font = '800 11px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(feedback.disclaimer, x + panel.width / 2, y + 278);
+
+  drawVictoryButton(
+    ctx,
+    restart.x,
+    restart.y,
+    restart.width,
+    layout.victoryActions.restart,
+    'rgba(246, 255, 244, 0.9)',
+    '#0b241d',
+  );
+  drawVictoryButton(ctx, next.x, next.y, next.width, layout.victoryActions.next, '#ffc861', '#0b241d');
 }
 
 function createDefaultCompletionFeedback(state) {
@@ -735,6 +815,8 @@ function normalizeCompletionFeedback(feedback, state) {
     ...source,
     label: toDisplayText(source.label, defaults.label),
     title: toDisplayText(source.title, defaults.title),
+    unlockText: toDisplayText(source.unlockText, '下一关已解锁'),
+    progressText: toDisplayText(source.progressText, ''),
     deltaText: toDisplayText(source.deltaText, defaults.deltaText),
     metricLabel: toDisplayText(source.metricLabel, defaults.metricLabel),
     subtitle: toDisplayText(source.subtitle, defaults.subtitle),

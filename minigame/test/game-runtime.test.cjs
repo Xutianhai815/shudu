@@ -17,10 +17,13 @@ test('runtime completes the active level through normal player input and persist
     startGame(runtime);
     completePuzzleWithTouchInput(runtime);
 
-    assert.match(runtime.drawnText(), /大脑除锈完成/);
-    assert.match(runtime.drawnText(), /\+0\.01%/);
-    assert.match(runtime.drawnText(), /今日训练/);
-    assert.match(runtime.drawnText(), /1 次/);
+    assert.match(runtime.drawnText(), /LAB CLEAR/);
+    assert.match(runtime.drawnText(), /第 1 关完成/);
+    assert.match(runtime.drawnText(), /下一关已解锁/);
+    assert.match(runtime.drawnText(), /1 \/ 12/);
+    assert.match(runtime.drawnText(), /下一关/);
+    assert.equal(runtime.drawnText().includes('同难度再来一局'), false);
+    assert.equal(runtime.drawnText().includes('回首页'), false);
     assert.ok(runtime.renderCalls.some((call) => call.type === 'game' && call.completed));
     assert.ok(
       runtime.savedWrites.some(
@@ -43,7 +46,7 @@ test('runtime records daily report once for a single completion transition', () 
   try {
     startGame(runtime);
     completePuzzleWithTouchInput(runtime);
-    tapVictoryRetry(runtime);
+    tapVictoryNext(runtime);
 
     assert.equal(runtime.latestGameCall().state.level.id, 'lab-02');
     assert.equal(runtime.latestGameCall().state.completed, false);
@@ -71,7 +74,7 @@ test('release runtime does not expose the debug complete button', () => {
 
     tapTopBarTitleArea(runtime);
 
-    assert.equal(runtime.drawnText().includes('大脑除锈完成'), false);
+    assert.equal(runtime.drawnText().includes('第 1 关完成'), false);
     assert.equal(
       runtime.savedWrites.some(
         (write) => write.value && write.value.activeRun && write.value.activeRun.completed === true,
@@ -180,7 +183,7 @@ test('runtime passes the WeChat menu button safe area into layouts', () => {
 
     startGame(runtime);
 
-    assert.ok(runtime.renderCalls.some((call) => call.type === 'game' && call.topBarY >= 98));
+    assert.ok(runtime.renderCalls.some((call) => call.type === 'game' && call.topBarY === 52));
   } finally {
     runtime.restore();
   }
@@ -231,7 +234,7 @@ test('runtime starts a hard free training puzzle without writing campaign comple
     assert.equal(game.state.completed, true);
     assert.match(runtime.drawnText(), /再练一局/);
     assert.match(runtime.drawnText(), /换个难度/);
-    assert.match(runtime.drawnText(), /回首页/);
+    assert.equal(runtime.drawnText().includes('回首页'), false);
     assert.equal(latestSave.completedLevelIds.includes(game.state.level.id), false);
     assert.ok(latestSave.dailyReport.completionCount >= 1);
     assert.equal(latestSave.practiceStats.totalCompleted, 1);
@@ -806,15 +809,9 @@ function tapRestartTool(runtime) {
   runtime.touch(tool.x + tool.width / 2, tool.y + tool.height / 2);
 }
 
-function tapVictoryRetry(runtime) {
-  const game = runtime.latestGameCall();
-  const restart = game.layout.victory.restart;
-  runtime.touch(restart.x + restart.width / 2, restart.y + restart.height / 2);
-}
-
 function tapVictoryNext(runtime) {
   const game = runtime.latestGameCall();
-  const next = game.layout.victory.next;
+  const next = game.layout.victory.campaignNext;
   runtime.touch(next.x + next.width / 2, next.y + next.height / 2);
 }
 

@@ -41,6 +41,10 @@ test('createMenuLayout exposes two homepage mode cards with first-time copy', ()
   assert.equal(layout.primaryButton, undefined);
   assert.equal(layout.continueButton, undefined);
   assert.deepEqual(Object.keys(layout.modeCards), ['campaign', 'practice']);
+  assert.ok(layout.modeCards.campaign.width <= 260);
+  assert.ok(layout.modeCards.campaign.height <= 56);
+  assert.ok(layout.modeCards.campaign.y <= 710);
+  assert.ok(layout.modeCards.practice.y <= 780);
   assert.equal(layout.modeCards.campaign.title, '闯关挑战');
   assert.equal(layout.modeCards.campaign.label, '闯关挑战');
   assert.equal(layout.modeCards.campaign.buttonLabel, '闯关挑战');

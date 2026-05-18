@@ -4,7 +4,6 @@ const {
   eraseSelected,
   nextLevel,
   restartLevel,
-  retrySameDifficultyLevel,
   selectCell,
   toggleNoteMode,
 } = require('./src/puzzle');
@@ -55,6 +54,7 @@ let dpr = 1;
 let debugToolsEnabled = false;
 let soundManager = null;
 let topInset = 0;
+let gameplayTopInset = 0;
 let companionSession = null;
 let companionToastTimer = null;
 let menuAnimationFrame = null;
@@ -110,33 +110,18 @@ function setupCanvas() {
   const width = systemInfo.windowWidth;
   const height = systemInfo.windowHeight;
   topInset = platform.getTopInset(systemInfo);
+  gameplayTopInset =
+    typeof platform.getGameplayTopInset === 'function'
+      ? platform.getGameplayTopInset(systemInfo, topInset)
+      : topInset;
 
   canvas.width = width * dpr;
   canvas.height = height * dpr;
 
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  layout = createLayout(width, height, { debugToolsEnabled, topInset });
+  layout = createLayout(width, height, { debugToolsEnabled, topInset: gameplayTopInset });
   refreshMenuLayout();
   refreshPracticeMenuLayout();
-}
-
-function getTopInset(wxApi, systemInfo) {
-  const statusBarHeight = Number.isFinite(systemInfo && systemInfo.statusBarHeight)
-    ? systemInfo.statusBarHeight
-    : 0;
-
-  if (wxApi && typeof wxApi.getMenuButtonBoundingClientRect === 'function') {
-    try {
-      const rect = wxApi.getMenuButtonBoundingClientRect();
-      if (rect && Number.isFinite(rect.bottom)) {
-        return rect.bottom + 8;
-      }
-    } catch (error) {
-      // Some simulator builds can throw here; status bar fallback is good enough.
-    }
-  }
-
-  return statusBarHeight > 0 ? statusBarHeight + 12 : 0;
 }
 
 function refreshMenuLayout() {
@@ -189,17 +174,40 @@ function render() {
       modeContext: createModeContext(),
       victoryActions: createVictoryActions(),
       companionFeedback: createCompanionView(state, companionSession),
-      completionFeedback: state.completed
-        ? createCompletionFeedback(
-            state,
-            completedLevelIds,
-            savedProgress && savedProgress.dailyReport,
-            getTodayKey(),
-            companionSession ? Date.now() - companionSession.startedAt : 0,
-          )
-        : null,
+      completionFeedback: state.completed ? createCurrentCompletionFeedback() : null,
     });
   }
+}
+
+function createCurrentCompletionFeedback() {
+  const feedback = createCompletionFeedback(
+    state,
+    completedLevelIds,
+    savedProgress && savedProgress.dailyReport,
+    getTodayKey(),
+    companionSession ? Date.now() - companionSession.startedAt : 0,
+  );
+
+  if (currentMode !== 'campaign') {
+    return feedback;
+  }
+
+  const levelNumber = getCampaignLevelNumber(state.level);
+
+  return {
+    ...feedback,
+    variant: 'campaign',
+    label: 'LAB CLEAR',
+    title: `第 ${levelNumber} 关完成`,
+    subtitle: '大脑已热身，继续挑战下一关。',
+    unlockText: '下一关已解锁',
+    progressText: `${levelNumber} / ${levels.length}`,
+  };
+}
+
+function getCampaignLevelNumber(level) {
+  const index = levels.findIndex((item) => item.id === (level && level.id));
+  return index >= 0 ? index + 1 : 1;
 }
 
 function createModeContext() {
@@ -221,14 +229,11 @@ function createVictoryActions() {
     return {
       restart: '再练一局',
       next: '换个难度',
-      home: '回首页',
     };
   }
 
   return {
-    restart: '同难度再来一局',
     next: '下一关',
-    home: '回首页',
   };
 }
 
@@ -352,7 +357,9 @@ function handleGameTouch(touch) {
     return;
   }
 
-  const hit = hitTest(layout, touch.clientX, touch.clientY, state.completed);
+  const hit = hitTest(layout, touch.clientX, touch.clientY, state.completed, {
+    victoryMode: currentMode,
+  });
   if (!hit) {
     return;
   }
@@ -586,14 +593,6 @@ function scheduleCompanionToastExpiry() {
 function applyVictoryAction(action) {
   persistProgress();
 
-  if (action === 'home') {
-    playSound('tool');
-    scene = 'menu';
-    refreshMenuLayout();
-    startMenuAnimation();
-    return;
-  }
-
   if (currentMode === 'practice') {
     applyPracticeVictoryAction(action);
     return;
@@ -603,14 +602,6 @@ function applyVictoryAction(action) {
 }
 
 function applyCampaignVictoryAction(action) {
-  if (action === 'restart') {
-    playSound('tool');
-    state = retrySameDifficultyLevel(state);
-    resetCompanionSession(state.level);
-    persistProgress();
-    return;
-  }
-
   if (action === 'next') {
     playSound('tool');
     state = nextLevel(state);

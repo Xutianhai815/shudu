@@ -39,7 +39,8 @@ test('renderer draws second level metadata and victory overlay without throwing'
 
   assert.ok(ctx.calls.some((call) => call.name === 'fillText' && call.args.includes(levels[1].title)));
   assert.ok(ctx.calls.some((call) => call.name === 'fillText' && call.args.includes('下一关')));
-  assert.ok(ctx.calls.some((call) => call.name === 'fillText' && call.args.includes('回首页')));
+  assert.ok(ctx.calls.some((call) => call.name === 'fillText' && call.args.includes('LAB CLEAR')));
+  assert.equal(getDrawnText(ctx).includes('回首页'), false);
 });
 
 test('renderer uses free training mode context in the top bar', () => {
@@ -82,22 +83,26 @@ test('renderer uses practice victory action copy when provided', () => {
   const layout = createLayout(430, 932);
 
   renderGame(ctx, state, layout, {
+    modeContext: {
+      mode: 'practice',
+      label: '自由练习',
+      title: '自由练习 · 入门',
+    },
     victoryActions: {
       restart: '再练一局',
       next: '换个难度',
-      home: '回首页',
     },
   });
 
   const text = getDrawnText(ctx);
   assert.match(text, /再练一局/);
   assert.match(text, /换个难度/);
-  assert.match(text, /回首页/);
+  assert.equal(text.includes('回首页'), false);
   assert.equal(text.includes('再试一次'), false);
   assert.equal(text.includes('下一关'), false);
 });
 
-test('renderer draws completed derust feedback without medical claim wording', () => {
+test('renderer draws simplified campaign victory without dense report copy', () => {
   const ctx = createMockCanvasContext();
   const state = {
     ...createPuzzleState(levels[0]),
@@ -105,7 +110,15 @@ test('renderer draws completed derust feedback without medical claim wording', (
     mistakes: 1,
   };
   const layout = createLayout(430, 932);
-  const completionFeedback = createCompletionFeedback(state, []);
+  const completionFeedback = {
+    ...createCompletionFeedback(state, []),
+    variant: 'campaign',
+    label: 'LAB CLEAR',
+    title: '第 1 关完成',
+    unlockText: '下一关已解锁',
+    progressText: '1 / 12',
+    subtitle: '大脑已热身，继续挑战下一关。',
+  };
 
   renderGame(ctx, state, layout, { completionFeedback });
 
@@ -114,10 +127,15 @@ test('renderer draws completed derust feedback without medical claim wording', (
     .map((call) => String(call.args[0]))
     .join(' ');
 
-  assert.match(text, /大脑除锈完成/);
-  assert.match(text, /\+0\.01%/);
-  assert.match(text, /娱乐数值，不代表医学效果。/);
-  assert.match(text, /再试一次/);
+  assert.match(text, /LAB CLEAR/);
+  assert.match(text, /第 1 关完成/);
+  assert.match(text, /下一关已解锁/);
+  assert.match(text, /1 \/ 12/);
+  assert.match(text, /下一关/);
+  assert.equal(text.includes('+0.01%'), false);
+  assert.equal(text.includes('娱乐数值，不代表医学效果。'), false);
+  assert.equal(text.includes('再试一次'), false);
+  assert.equal(text.includes('回首页'), false);
   assert.equal(/老年痴呆|阿尔茨海默|预防|降低.*风险|医学证明|患病概率/.test(text), false);
 });
 
@@ -139,14 +157,12 @@ test('renderer safely merges incomplete completion feedback', () => {
   });
 
   const text = getDrawnText(ctx);
-  assert.match(text, /大脑除锈完成/);
-  assert.match(text, /今日训练/);
-  assert.match(text, /\+2/);
-  assert.match(text, /大脑状态/);
-  assert.match(text, /已激活/);
+  assert.match(text, /LAB CLEAR/);
+  assert.match(text, /下一关已解锁/);
   assert.equal(/错误数|mistakes/i.test(text), false);
-  assert.match(text, /再试一次/);
   assert.match(text, /下一关/);
+  assert.equal(text.includes('再试一次'), false);
+  assert.equal(text.includes('回首页'), false);
   assert.equal(text.includes('undefined'), false);
 });
 
@@ -160,6 +176,11 @@ test('renderer fills missing second completion stat with a default card', () => 
   const layout = createLayout(430, 932);
 
   renderGame(ctx, state, layout, {
+    modeContext: {
+      mode: 'practice',
+      label: '自由练习',
+      title: '自由练习 · 入门',
+    },
     completionFeedback: {
       stats: [{ label: '自定义', value: 'OK' }],
     },
@@ -587,6 +608,15 @@ test('renderer draws brain greenhouse homepage without report copy', () => {
   assert.equal(text.includes('已完成 2/12'), false);
   assert.equal(text.includes('选择难度'), false);
   assert.equal(/今日报告|今日除锈|累计除锈|今日第一局/.test(text), false);
+});
+
+test('renderer gives simplified homepage buttons large label text', () => {
+  const ctx = createMockCanvasContext();
+  const menuLayout = createMenuLayout(430, 932, levels);
+
+  renderMenu(ctx, menuLayout);
+
+  assert.ok(ctx.calls.some((call) => call.name === 'set:font' && call.args[0] === '950 33px sans-serif'));
 });
 
 test('renderer draws the nine-by-nine sudoku hero board', () => {
