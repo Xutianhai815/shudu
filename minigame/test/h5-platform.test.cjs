@@ -1,5 +1,6 @@
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
+const os = require('node:os');
 const path = require('node:path');
 const test = require('node:test');
 const vm = require('node:vm');
@@ -167,7 +168,7 @@ test('huawei h5 preview entry includes canvas and startup script', () => {
 
   assert.match(html, /<canvas\b[^>]*\bid=["']gameCanvas["'][^>]*>/);
   assert.match(html, /<link\b[^>]*\bhref=["']styles\.css["'][^>]*>/);
-  assert.match(html, /<script\b[^>]*\bsrc=["']main\.js["'][^>]*><\/script>/);
+  assert.match(html, /<script\b[^>]*\bsrc=["']dist\/game\.bundle\.js["'][^>]*><\/script>/);
 });
 
 test('huawei h5 main starts the shared app runtime with h5 platform', () => {
@@ -215,6 +216,30 @@ test('huawei h5 main starts the shared app runtime with h5 platform', () => {
     ['createAppRuntime', platform],
     ['boot'],
   ]);
+});
+
+test('huawei h5 build script exists and writes a browser bundle', () => {
+  const buildScript = path.join(huaweiH5Root, 'build.js');
+  const { buildBundle } = require(buildScript);
+  const outputFile = path.join(
+    fs.mkdtempSync(path.join(os.tmpdir(), 'huawei-h5-bundle-')),
+    'game.bundle.js',
+  );
+
+  const result = buildBundle({ outputFile });
+  const bundle = fs.readFileSync(outputFile, 'utf8');
+
+  assert.equal(result.outputFile, outputFile);
+  assert.match(bundle, /__huaweiH5Modules__/);
+  assert.match(bundle, /createAppRuntime\(createH5Platform\(window\)\)\.boot\(\)/);
+  assert.doesNotMatch(bundle, /require\(['"]\.\.?\/[^'"]+['"]\)/);
+});
+
+test('huawei h5 html loads built bundle for browser preview', () => {
+  const html = fs.readFileSync(path.join(huaweiH5Root, 'index.html'), 'utf8');
+
+  assert.match(html, /<script\b[^>]*\bsrc=["']dist\/game\.bundle\.js["'][^>]*><\/script>/);
+  assert.doesNotMatch(html, /<script\b[^>]*\bsrc=["']main\.js["'][^>]*><\/script>/);
 });
 
 function createMockBrowser(options = {}) {
