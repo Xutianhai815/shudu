@@ -4,6 +4,7 @@ const path = require('node:path');
 const test = require('node:test');
 
 const gamePath = path.join(__dirname, '..', 'game.js');
+const appRuntimePath = path.join(__dirname, '..', 'src', 'app-runtime.js');
 const rendererPath = path.join(__dirname, '..', 'src', 'renderer.js');
 const { levels } = require('../src/levels');
 const { createPuzzleState } = require('../src/puzzle');
@@ -429,6 +430,7 @@ function bootGameRuntime(envVersion, options = {}) {
   const originalWx = global.wx;
   const originalLoad = Module._load;
   const originalGameCache = require.cache[gamePath];
+  const originalAppRuntimeCache = require.cache[appRuntimePath];
   const originalRendererCache = require.cache[rendererPath];
   const ctx = createMockCanvasContext();
   const renderCalls = [];
@@ -445,6 +447,7 @@ function bootGameRuntime(envVersion, options = {}) {
   let accelerometerOffCount = 0;
 
   delete require.cache[gamePath];
+  delete require.cache[appRuntimePath];
 
   class FixedDate extends OriginalDate {
     constructor(...args) {
@@ -651,9 +654,14 @@ function bootGameRuntime(envVersion, options = {}) {
       global.cancelAnimationFrame = originalCancelAnimationFrame;
       global.wx = originalWx;
       delete require.cache[gamePath];
+      delete require.cache[appRuntimePath];
 
       if (originalGameCache) {
         require.cache[gamePath] = originalGameCache;
+      }
+
+      if (originalAppRuntimeCache) {
+        require.cache[appRuntimePath] = originalAppRuntimeCache;
       }
 
       if (originalRendererCache) {
