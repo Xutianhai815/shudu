@@ -1,7 +1,13 @@
 const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
 const test = require('node:test');
+const vm = require('node:vm');
 
 const { createH5Platform } = require('../src/platform/h5-platform');
+
+const repoRoot = path.resolve(__dirname, '../..');
+const huaweiH5Root = path.join(repoRoot, 'huawei-h5');
 
 test('h5 platform reads window size and device pixel ratio', () => {
   const platform = createH5Platform(createMockBrowser());
@@ -154,6 +160,61 @@ test('h5 platform creates a no-crash audio context wrapper when Audio is unavail
   assert.equal(typeof audio.onError, 'function');
   assert.doesNotThrow(() => audio.onError(() => {}));
   assert.doesNotThrow(() => audio.destroy());
+});
+
+test('huawei h5 preview entry includes canvas and startup script', () => {
+  const html = fs.readFileSync(path.join(huaweiH5Root, 'index.html'), 'utf8');
+
+  assert.match(html, /<canvas\b[^>]*\bid=["']gameCanvas["'][^>]*>/);
+  assert.match(html, /<link\b[^>]*\bhref=["']styles\.css["'][^>]*>/);
+  assert.match(html, /<script\b[^>]*\bsrc=["']main\.js["'][^>]*><\/script>/);
+});
+
+test('huawei h5 main starts the shared app runtime with h5 platform', () => {
+  const mainSource = fs.readFileSync(path.join(huaweiH5Root, 'main.js'), 'utf8');
+  const calls = [];
+  const platform = { environment: 'h5' };
+  const runtime = {
+    boot() {
+      calls.push(['boot']);
+    },
+  };
+  const window = {};
+
+  vm.runInNewContext(mainSource, {
+    require(request) {
+      calls.push(['require', request]);
+
+      if (request === '../minigame/src/app-runtime') {
+        return {
+          createAppRuntime(receivedPlatform) {
+            calls.push(['createAppRuntime', receivedPlatform]);
+            return runtime;
+          },
+        };
+      }
+
+      if (request === '../minigame/src/platform/h5-platform') {
+        return {
+          createH5Platform(receivedWindow) {
+            calls.push(['createH5Platform', receivedWindow]);
+            return platform;
+          },
+        };
+      }
+
+      throw new Error(`Unexpected require: ${request}`);
+    },
+    window,
+  });
+
+  assert.deepEqual(calls, [
+    ['require', '../minigame/src/app-runtime'],
+    ['require', '../minigame/src/platform/h5-platform'],
+    ['createH5Platform', window],
+    ['createAppRuntime', platform],
+    ['boot'],
+  ]);
 });
 
 function createMockBrowser(options = {}) {
