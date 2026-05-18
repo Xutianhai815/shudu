@@ -16,11 +16,7 @@ function buildBundle(options = {}) {
   fs.mkdirSync(path.dirname(outputFile), { recursive: true });
   fs.writeFileSync(outputFile, bundle);
 
-  return {
-    outputFile,
-    entryFile,
-    moduleCount: modules.length,
-  };
+  return outputFile;
 }
 
 function collectModule(file, modules, moduleIds) {
@@ -124,8 +120,7 @@ function indentSource(source, spaces) {
 }
 
 if (require.main === module) {
-  const result = buildBundle();
-  console.log(result.outputFile);
+  console.log(buildBundle());
 }
 
 module.exports = {

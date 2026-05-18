@@ -227,9 +227,9 @@ test('huawei h5 build script exists and writes a browser bundle', () => {
   );
 
   const result = buildBundle({ outputFile });
-  const bundle = fs.readFileSync(outputFile, 'utf8');
+  const bundle = fs.readFileSync(result, 'utf8');
 
-  assert.equal(result.outputFile, outputFile);
+  assert.equal(result, outputFile);
   assert.match(bundle, /__huaweiH5Modules__/);
   assert.match(bundle, /createAppRuntime\(createH5Platform\(window\)\)\.boot\(\)/);
   assert.doesNotMatch(bundle, /require\(['"]\.\.?\/[^'"]+['"]\)/);
