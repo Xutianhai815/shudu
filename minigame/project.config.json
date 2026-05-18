@@ -1,0 +1,47 @@
+{
+  "compileType": "game",
+  "appid": "wx2ae48d4332aebd75",
+  "projectname": "lab-lines-sudoku",
+  "simulatorType": "wechat",
+  "simulatorPluginLibVersion": {},
+  "miniprogramRoot": "./",
+  "packOptions": {
+    "ignore": [
+      {
+        "type": "folder",
+        "value": "test"
+      },
+      {
+        "type": "folder",
+        "value": "tools"
+      },
+      {
+        "type": "folder",
+        "value": "artifacts"
+      },
+      {
+        "type": "file",
+        "value": "README.md"
+      }
+    ]
+  },
+  "setting": {
+    "urlCheck": false,
+    "es6": true,
+    "enhance": true,
+    "postcss": false,
+    "minified": true,
+    "newFeature": true,
+    "minifyWXML": true
+  },
+  "condition": {
+    "game": {
+      "currentL": -1,
+      "list": []
+    },
+    "miniprogram": {
+      "current": -1,
+      "list": []
+    }
+  }
+}

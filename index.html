@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Lab Lines Sudoku Prototype</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="prototype-shell">
+      <section class="phone" aria-label="Lab Lines Sudoku gameplay prototype">
+        <header class="top-bar">
+          <button class="icon-button" aria-label="Back">‹</button>
+          <div class="level-meta">
+            <span class="level-label">LAB-02</span>
+            <strong>温度线实验</strong>
+          </div>
+          <div class="timer">08:42</div>
+          <button class="icon-button" aria-label="Pause">Ⅱ</button>
+        </header>
+
+        <section class="rule-strip" aria-label="Variant rules">
+          <span class="rule-chip chip-teal">THERMO</span>
+          <span class="rule-chip chip-amber">ARROW</span>
+          <span class="rule-chip chip-line">3 hints</span>
+        </section>
+
+        <section class="board-stage">
+          <div class="board-wrap">
+            <svg class="clue-layer" viewBox="0 0 900 900" aria-hidden="true">
+              <path class="thermo-line" d="M150 750 C215 685 250 610 250 520 S335 410 430 360" />
+              <circle class="thermo-bulb" cx="150" cy="750" r="38" />
+              <path class="thermo-line thin" d="M650 150 C600 230 620 320 720 370" />
+              <circle class="thermo-bulb small" cx="650" cy="150" r="28" />
+              <path class="arrow-line" d="M550 650 C620 610 670 560 750 535" />
+              <circle class="arrow-sum" cx="550" cy="650" r="42" />
+              <path class="arrow-head" d="M735 515 L782 532 L742 562" />
+            </svg>
+            <div id="board" class="board" aria-label="Sudoku board"></div>
+          </div>
+        </section>
+
+        <section class="status-panel" aria-label="Puzzle status">
+          <div>
+            <span class="status-label">FOCUS</span>
+            <strong id="selectedReadout">R1 C1</strong>
+          </div>
+          <div>
+            <span class="status-label">MODE</span>
+            <strong>答案</strong>
+          </div>
+          <div>
+            <span class="status-label">FLOW</span>
+            <strong>稳定</strong>
+          </div>
+        </section>
+
+        <section class="tool-row" aria-label="Game tools">
+          <button class="tool-button" aria-label="Notes"><span>□</span><small>Notes</small></button>
+          <button class="tool-button" aria-label="Undo"><span>↶</span><small>Undo</small></button>
+          <button class="tool-button" aria-label="Hint"><span>?</span><small>Hint</small></button>
+          <button class="tool-button" aria-label="Erase"><span>⌫</span><small>Erase</small></button>
+        </section>
+
+        <section id="keypad" class="keypad" aria-label="Number keypad"></section>
+      </section>
+    </main>
+
+    <script type="module" src="./src/app.js"></script>
+  </body>
+</html>
