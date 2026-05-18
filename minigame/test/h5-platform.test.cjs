@@ -16,6 +16,17 @@ test('h5 platform reads window size and device pixel ratio', () => {
   assert.equal(platform.getEnvironment(), 'h5');
 });
 
+test('h5 platform falls back to a compact phone viewport when window size is unavailable', () => {
+  const platform = createH5Platform(createMockBrowser({ omitWindowSize: true }));
+
+  assert.deepEqual(platform.getSystemInfo(), {
+    pixelRatio: 2,
+    windowWidth: 375,
+    windowHeight: 667,
+    statusBarHeight: 0,
+  });
+});
+
 test('h5 platform stores JSON-compatible progress values in localStorage', () => {
   const browser = createMockBrowser();
   const platform = createH5Platform(browser);
@@ -55,6 +66,22 @@ test('h5 platform maps confirm result to wx-style showModal success payload', ()
   assert.equal(browser.confirmMessage, '重新开始本局？\n要清空本局已填写内容吗？');
 });
 
+test('h5 platform defaults showModal to cancel when confirm is unavailable', () => {
+  const browser = createMockBrowser({ omitConfirm: true });
+  const platform = createH5Platform(browser);
+  let payload = null;
+
+  platform.showModal({
+    title: '重新开始本局？',
+    content: '要清空本局已填写内容吗？',
+    success(result) {
+      payload = result;
+    },
+  });
+
+  assert.deepEqual(payload, { confirm: false, cancel: true });
+});
+
 test('h5 platform registers touch and mouse input as wx-style touches', () => {
   const browser = createMockBrowser();
   const platform = createH5Platform(browser);
@@ -63,7 +90,10 @@ test('h5 platform registers touch and mouse input as wx-style touches', () => {
   platform.onTouchStart((event) => events.push(event));
   browser.canvas.dispatch('touchstart', {
     preventDefault() {},
-    touches: [{ clientX: 12, clientY: 34 }],
+    touches: [
+      { clientX: 12, clientY: 34, force: 0.7 },
+      { clientX: 90, clientY: 91 },
+    ],
   });
   browser.canvas.dispatch('mousedown', {
     preventDefault() {},
@@ -77,6 +107,40 @@ test('h5 platform registers touch and mouse input as wx-style touches', () => {
   ]);
 });
 
+test('h5 platform exposes wx-compatible audio fields when Audio is available', () => {
+  class MockAudio {
+    constructor() {
+      this.src = '';
+      this.volume = 1;
+      this.currentTime = 10;
+      this.playCount = 0;
+      this.pauseCount = 0;
+    }
+
+    play() {
+      this.playCount += 1;
+      return Promise.resolve();
+    }
+
+    pause() {
+      this.pauseCount += 1;
+    }
+  }
+
+  const browser = createMockBrowser({ Audio: MockAudio });
+  const audio = createH5Platform(browser).createInnerAudioContext();
+
+  audio.src = 'assets/sounds/input.wav';
+  audio.volume = 0.5;
+
+  assert.equal(audio.obeyMuteSwitch, true);
+  assert.equal(typeof audio.onError, 'function');
+  assert.doesNotThrow(() => audio.onError(() => {}));
+  assert.doesNotThrow(() => audio.play());
+  assert.doesNotThrow(() => audio.stop());
+  assert.doesNotThrow(() => audio.destroy());
+});
+
 test('h5 platform creates a no-crash audio context wrapper when Audio is unavailable', () => {
   const browser = createMockBrowser({ Audio: null });
   const audio = createH5Platform(browser).createInnerAudioContext();
@@ -86,6 +150,9 @@ test('h5 platform creates a no-crash audio context wrapper when Audio is unavail
 
   assert.doesNotThrow(() => audio.play());
   assert.doesNotThrow(() => audio.stop());
+  assert.equal(audio.obeyMuteSwitch, true);
+  assert.equal(typeof audio.onError, 'function');
+  assert.doesNotThrow(() => audio.onError(() => {}));
   assert.doesNotThrow(() => audio.destroy());
 });
 
@@ -105,10 +172,8 @@ function createMockBrowser(options = {}) {
     },
   };
 
-  return {
+  const browser = {
     canvas,
-    innerWidth: 430,
-    innerHeight: 932,
     devicePixelRatio: 2,
     document: {
       getElementById(id) {
@@ -126,10 +191,6 @@ function createMockBrowser(options = {}) {
         storage.delete(key);
       },
     },
-    confirm(message) {
-      this.confirmMessage = message;
-      return options.confirmResult === true;
-    },
     addEventListener(type, handler) {
       listeners.set(`window:${type}`, handler);
     },
@@ -142,6 +203,20 @@ function createMockBrowser(options = {}) {
     },
     Audio: options.Audio,
   };
+
+  if (!options.omitWindowSize) {
+    browser.innerWidth = 430;
+    browser.innerHeight = 932;
+  }
+
+  if (!options.omitConfirm) {
+    browser.confirm = function confirm(message) {
+      this.confirmMessage = message;
+      return options.confirmResult === true;
+    };
+  }
+
+  return browser;
 }
 
 function createMockCanvasContext() {

@@ -28,8 +28,8 @@ function createH5Platform(browser = globalThis) {
     getSystemInfo() {
       return {
         pixelRatio: browser.devicePixelRatio || 1,
-        windowWidth: browser.innerWidth || 0,
-        windowHeight: browser.innerHeight || 0,
+        windowWidth: browser.innerWidth || 375,
+        windowHeight: browser.innerHeight || 667,
         statusBarHeight: 0,
       };
     },
@@ -47,7 +47,7 @@ function createH5Platform(browser = globalThis) {
         if (typeof event.preventDefault === 'function') {
           event.preventDefault();
         }
-        callback({ touches: Array.from(event.touches || []) });
+        callback({ touches: [normalizeTouch((event.touches || [])[0])] });
       });
 
       canvas.addEventListener('mousedown', (event) => {
@@ -68,7 +68,7 @@ function createH5Platform(browser = globalThis) {
       const title = options.title || '';
       const content = options.content || '';
       const message = [title, content].filter(Boolean).join('\n');
-      const confirm = typeof browser.confirm === 'function' ? browser.confirm(message) : true;
+      const confirm = typeof browser.confirm === 'function' ? browser.confirm(message) : false;
       if (typeof options.success === 'function') {
         options.success({ confirm, cancel: !confirm });
       }
@@ -167,6 +167,13 @@ function resolveCanvas(browser) {
   return null;
 }
 
+function normalizeTouch(touch = {}) {
+  return {
+    clientX: touch.clientX,
+    clientY: touch.clientY,
+  };
+}
+
 function createAudioContext(browser) {
   const AudioCtor = browser.Audio;
   if (typeof AudioCtor !== 'function') {
@@ -175,6 +182,7 @@ function createAudioContext(browser) {
 
   const audio = new AudioCtor();
   return {
+    obeyMuteSwitch: true,
     get src() {
       return audio.src;
     },
@@ -209,6 +217,7 @@ function createAudioContext(browser) {
       }
       audio.src = '';
     },
+    onError() {},
   };
 }
 
@@ -216,9 +225,11 @@ function createNoopAudioContext() {
   return {
     src: '',
     volume: 1,
+    obeyMuteSwitch: true,
     play() {},
     stop() {},
     destroy() {},
+    onError() {},
   };
 }
 
