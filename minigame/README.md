@@ -80,11 +80,21 @@ Use these as a quick visual QA pass before or after opening the project in WeCha
 - Local lightweight sound effects for puzzle selection, digit input, tools, and completion.
 - Neutral in-progress input feedback, completion detection, and a positive victory overlay.
 - Quiet companion feedback for all levels: front levels use lightweight observation/rhythm copy, while mid/late levels keep deeper focus-time, calm atmosphere, and long-session completion feedback.
-- Victory overlay actions for replaying the same difficulty, advancing the campaign, changing practice difficulty, and returning home.
+- Victory overlay actions are intentionally narrow: campaign advances with `下一关`, while free practice supports `再练一局` and `换个难度`.
 - The first screen intentionally hides the full level list; players progress through the main flow from `闯关挑战`.
 - Independent local saves for campaign runs and free practice runs.
 - Data-driven level metadata in `src/levels.js`, including 12 progressive basic Sudoku levels with givens, solutions, hints, and rule chips.
 - Pure puzzle/layout modules that can be tested with Node.
+
+## Multi-Platform Runtime
+
+The playable game should stay platform-neutral whenever possible:
+
+- Shared gameplay logic lives in `src/app-runtime.js` and `src/`.
+- WeChat-specific APIs live in `src/platform/wechat-platform.js` and `game.js`.
+- H5/Huawei Quick Game APIs live in `src/platform/h5-platform.js` and `../huawei-h5/`.
+
+When adding a gameplay feature, put it in shared modules first. Only add platform-specific code for capabilities such as login, sharing, payment, storage bridges, or channel review requirements.
 
 ## Adding Levels
 
