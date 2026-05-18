@@ -37,8 +37,10 @@ const {
   createCompanionView,
   registerCompanionAction,
 } = require('./src/companion-feedback');
+const { createWechatPlatform } = require('./src/platform/wechat-platform');
 
-const canvas = wx.createCanvas();
+const platform = createWechatPlatform(wx);
+const canvas = platform.createCanvas();
 const ctx = canvas.getContext('2d');
 
 let scene = 'menu';
@@ -103,11 +105,11 @@ function boot() {
 }
 
 function setupCanvas() {
-  const systemInfo = wx.getSystemInfoSync();
+  const systemInfo = platform.getSystemInfo();
   dpr = systemInfo.pixelRatio || 1;
   const width = systemInfo.windowWidth;
   const height = systemInfo.windowHeight;
-  topInset = getTopInset(wx, systemInfo);
+  topInset = platform.getTopInset(systemInfo);
 
   canvas.width = width * dpr;
   canvas.height = height * dpr;
