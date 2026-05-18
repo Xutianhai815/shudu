@@ -242,6 +242,16 @@ test('huawei h5 html loads built bundle for browser preview', () => {
   assert.doesNotMatch(html, /<script\b[^>]*\bsrc=["']main\.js["'][^>]*><\/script>/);
 });
 
+test('huawei h5 build produces a bundle containing startup modules', () => {
+  const { buildBundle } = require('../../huawei-h5/build');
+  const output = buildBundle();
+  const bundle = fs.readFileSync(output, 'utf8');
+
+  assert.match(bundle, /createAppRuntime/);
+  assert.match(bundle, /createH5Platform/);
+  assert.match(bundle, /数独实验室/);
+});
+
 function createMockBrowser(options = {}) {
   const storage = new Map();
   const listeners = new Map();
