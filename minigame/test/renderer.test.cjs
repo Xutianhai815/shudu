@@ -736,6 +736,7 @@ test('renderer draws the free training difficulty menu copy', () => {
   assert.match(text, /推荐：稳定/);
   assert.match(text, /推荐/);
   assert.match(text, /长局专注，不急着快。/);
+  assert.equal((text.match(/推荐：稳定/g) || []).length, 1);
   assert.equal(text.includes('undefined'), false);
 });
 

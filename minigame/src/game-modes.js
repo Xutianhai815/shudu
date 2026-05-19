@@ -152,6 +152,12 @@ function getRecommendedTrainingDifficulty({ completedLevelIds = [], practiceStat
     return normalizedStats.lastTrainingDifficulty;
   }
 
+  const legacyTrainingOption = getTrainingOptionBySourceDifficulty(normalizedStats.lastDifficulty);
+
+  if (legacyTrainingOption) {
+    return legacyTrainingOption.trainingDifficulty;
+  }
+
   const completedCount = Array.isArray(completedLevelIds)
     ? new Set(completedLevelIds.filter((levelId) => typeof levelId === 'string')).size
     : 0;

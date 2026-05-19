@@ -48,6 +48,11 @@ function createPracticeMenuLayout(width, height, levels, options = {}) {
       y: titleY + (compact ? 28 : 34),
       text: '选一个难度，随时练一局，不影响闯关进度。',
     },
+    recommendation: {
+      x: margin,
+      y: titleY + (compact ? 50 : 56),
+      text: recommendation,
+    },
     ambientParticles: PRACTICE_AMBIENT_PARTICLES.map((particle) => ({
       x: width * particle.xRatio,
       y: height * particle.yRatio,
@@ -68,7 +73,6 @@ function createPracticeMenuLayout(width, height, levels, options = {}) {
         sourceDifficulty: option.sourceDifficulty,
         label: option.label,
         description: option.description,
-        recommendation,
         recommendationText: option.recommendationText,
         enabled,
         statusLabel: enabled ? (recommended ? '推荐' : '可练习') : '暂未开放',

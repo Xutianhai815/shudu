@@ -13,6 +13,11 @@ test('createPracticeMenuLayout builds a free training difficulty page on 430x932
   assert.equal(layout.height, 932);
   assert.equal(layout.title.text, '自由练习');
   assert.equal(layout.subtitle.text, '选一个难度，随时练一局，不影响闯关进度。');
+  assert.deepEqual(layout.recommendation, {
+    x: layout.margin,
+    y: layout.subtitle.y + 22,
+    text: '推荐：稳定',
+  });
   assert.equal(layout.backButton.label, '返回');
   assert.deepEqual(
     layout.difficultyCards.map((card) => [
@@ -20,16 +25,16 @@ test('createPracticeMenuLayout builds a free training difficulty page on 430x932
       card.sourceDifficulty,
       card.label,
       card.enabled,
-      card.recommendation,
       card.statusLabel,
     ]),
     [
-      ['warmup', 'intro', '热身', true, '推荐：稳定', '可练习'],
-      ['steady', 'easy', '稳定', true, '推荐：稳定', '推荐'],
-      ['standard', 'normal', '标准', true, '推荐：稳定', '可练习'],
-      ['advanced', 'hard', '进阶', true, '推荐：稳定', '可练习'],
+      ['warmup', 'intro', '热身', true, '可练习'],
+      ['steady', 'easy', '稳定', true, '推荐'],
+      ['standard', 'normal', '标准', true, '可练习'],
+      ['advanced', 'hard', '进阶', true, '可练习'],
     ],
   );
+  assert.ok(layout.difficultyCards.every((card) => card.recommendation === undefined));
 });
 
 test('createPracticeMenuLayout marks the first-time recommended training card', () => {
@@ -38,9 +43,9 @@ test('createPracticeMenuLayout marks the first-time recommended training card', 
   });
   const recommended = layout.difficultyCards.find((card) => card.trainingDifficulty === 'warmup');
 
+  assert.equal(layout.recommendation.text, '推荐：热身');
   assert.equal(recommended.label, '热身');
   assert.equal(recommended.statusLabel, '推荐');
-  assert.equal(recommended.recommendation, '推荐：热身');
 });
 
 test('createPracticeMenuLayout keeps controls inside a short viewport', () => {
@@ -66,7 +71,12 @@ test('createPracticeMenuLayout disables unavailable difficulties', () => {
   const layout = createPracticeMenuLayout(430, 932, introOnlyLevels);
 
   assert.deepEqual(
-    layout.difficultyCards.map((card) => [card.trainingDifficulty, card.sourceDifficulty, card.enabled, card.statusLabel]),
+    layout.difficultyCards.map((card) => [
+      card.trainingDifficulty,
+      card.sourceDifficulty,
+      card.enabled,
+      card.statusLabel,
+    ]),
     [
       ['warmup', 'intro', true, '推荐'],
       ['steady', 'easy', false, '暂未开放'],
@@ -85,12 +95,15 @@ test('hitTestPracticeMenu maps back and enabled difficulty cards', () => {
     type: 'practiceMenu',
     action: 'back',
   });
-  assert.deepEqual(hitTestPracticeMenu(layout, advanced.x + advanced.width / 2, advanced.y + advanced.height / 2), {
-    type: 'practiceMenu',
-    action: 'difficulty',
-    difficulty: 'hard',
-    trainingDifficulty: 'advanced',
-  });
+  assert.deepEqual(
+    hitTestPracticeMenu(layout, advanced.x + advanced.width / 2, advanced.y + advanced.height / 2),
+    {
+      type: 'practiceMenu',
+      action: 'difficulty',
+      difficulty: 'hard',
+      trainingDifficulty: 'advanced',
+    },
+  );
 });
 
 test('hitTestPracticeMenu ignores disabled difficulty cards and outside taps', () => {

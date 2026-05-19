@@ -94,6 +94,25 @@ test('getRecommendedTrainingDifficulty prefers stored next and last training dif
   );
 });
 
+test('getRecommendedTrainingDifficulty maps legacy last source difficulty before campaign fallback', () => {
+  assert.equal(
+    getRecommendedTrainingDifficulty({
+      completedLevelIds: [],
+      practiceStats: {
+        totalCompleted: 5,
+        lastDifficulty: 'hard',
+        recentLevelIdsByDifficulty: {
+          intro: null,
+          easy: null,
+          normal: null,
+          hard: 'lab-19',
+        },
+      },
+    }),
+    'advanced',
+  );
+});
+
 test('choosePracticeLevel picks a level from the requested difficulty', () => {
   const stats = createEmptyPracticeStats();
   const picked = choosePracticeLevel(levels, 'advanced', stats);
