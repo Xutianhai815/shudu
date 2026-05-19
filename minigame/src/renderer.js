@@ -231,6 +231,7 @@ function drawMenuBoardGrid(ctx, x, y, size) {
 
 function drawMenuActions(ctx, layout) {
   if (layout.modeCards) {
+    drawMenuProgressSummaries(ctx, layout);
     drawMenuModeCards(ctx, layout, layout.modeCards);
     return;
   }
@@ -244,6 +245,33 @@ function drawMenuActions(ctx, layout) {
   if (layout.primaryButton) {
     drawMenuButton(ctx, layout, layout.primaryButton, layout.primaryButton.label, '#18211f', '#ffffff');
   }
+}
+
+function drawMenuProgressSummaries(ctx, layout) {
+  const summaries = [layout.campaignProgress, layout.growthSummary].filter(
+    (summary) => summary && summary.visible && summary.text,
+  );
+
+  if (summaries.length === 0) {
+    return;
+  }
+
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  const campaignCard = layout.modeCards && layout.modeCards.campaign;
+  const x = campaignCard ? campaignCard.x + campaignCard.width / 2 : layout.width / 2;
+  const startY = campaignCard
+    ? campaignCard.y - (layout.compact ? 40 : 46)
+    : layout.height - layout.margin - 140;
+
+  summaries.forEach((summary, index) => {
+    ctx.fillStyle = index === 0 ? 'rgba(24, 33, 31, 0.72)' : 'rgba(8, 116, 113, 0.78)';
+    setFont(ctx, layout, index === 0 ? '900 13px sans-serif' : '850 12px sans-serif');
+    ctx.fillText(summary.text, x, startY + index * (layout.compact ? 18 : 20));
+  });
+
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'alphabetic';
 }
 
 function drawMenuModeCards(ctx, layout, modeCards) {

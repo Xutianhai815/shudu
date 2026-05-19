@@ -29,6 +29,7 @@ function createMenuLayout(width, height, levels, progressSummary = {}) {
     hasActiveRun = false,
     activeRun = null,
     completedLevelIds = [],
+    growthStats = null,
     topInset = 0,
   } = progressSummary;
   const margin = 22;
@@ -60,6 +61,7 @@ function createMenuLayout(width, height, levels, progressSummary = {}) {
     completedLevelIds,
   });
   const practiceCopy = createPracticeCardCopy();
+  const completedCount = countKnownCompletedLevels(completedLevelIds, levels);
 
   const modeCards = {
     campaign: {
@@ -110,6 +112,11 @@ function createMenuLayout(width, height, levels, progressSummary = {}) {
       radius: particle.radius,
       color: particle.color,
     })),
+    campaignProgress: {
+      visible: true,
+      text: `闯关进度 ${completedCount}/${Array.isArray(levels) ? levels.length : 0}`,
+    },
+    growthSummary: createGrowthSummary(growthStats),
     modeCards,
     derustSummary: { visible: false },
     levelCards: [],
@@ -145,6 +152,30 @@ function createPracticeCardCopy() {
   return {
     title: '自由练习',
     buttonLabel: '自由练习',
+  };
+}
+
+function createGrowthSummary(growthStats) {
+  const currentStreak =
+    growthStats && Number.isInteger(growthStats.currentStreak) && growthStats.currentStreak > 0
+      ? growthStats.currentStreak
+      : 0;
+
+  if (currentStreak === 0) {
+    return {
+      visible: false,
+      text: '',
+    };
+  }
+
+  const todayCompletedCount =
+    growthStats && Number.isInteger(growthStats.todayCompletedCount) && growthStats.todayCompletedCount > 0
+      ? growthStats.todayCompletedCount
+      : 0;
+
+  return {
+    visible: true,
+    text: `连续除锈 ${currentStreak} 天 · 今日 ${todayCompletedCount} 局`,
   };
 }
 

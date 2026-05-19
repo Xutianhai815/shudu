@@ -22,6 +22,7 @@ const {
   createRunFromState,
   restoreStateFromProgress,
 } = require('./progress');
+const { recordGrowthCompletion } = require('./growth-stats');
 const { loadProgress, saveProgress } = require('./storage');
 const { renderGame, renderMenu, renderPracticeMenu } = require('./renderer');
 const {
@@ -141,6 +142,7 @@ function refreshMenuLayout() {
       hasPracticeRun: Boolean(practiceRun),
       practiceRun,
       completedLevelIds,
+      growthStats: savedProgress && savedProgress.growthStats,
       topInset,
     }),
     canvasTextScale: layout.canvasTextScale,
@@ -458,11 +460,13 @@ function recordCompletedLevel() {
 
   const levelId = state.level.id;
   const previous = savedProgress || {};
+  const todayKey = getTodayKey();
   const nextDailyReport = createNextDailyReport(
     previous.dailyReport,
     levelId,
-    getTodayKey(),
+    todayKey,
   );
+  const nextGrowthStats = recordGrowthCompletion(previous.growthStats, currentMode, todayKey);
 
   if (currentMode === 'practice') {
     savedProgress = {
@@ -470,6 +474,7 @@ function recordCompletedLevel() {
       practiceRun: null,
       completedLevelIds,
       dailyReport: nextDailyReport,
+      growthStats: nextGrowthStats,
       practiceStats: recordPracticeCompletion(previous.practiceStats, state.level),
     };
     return;
@@ -480,6 +485,7 @@ function recordCompletedLevel() {
     ...previous,
     completedLevelIds,
     dailyReport: nextDailyReport,
+    growthStats: nextGrowthStats,
   };
 }
 
@@ -504,6 +510,7 @@ function persistProgress() {
     completedLevelIds,
     dailyReport: previous.dailyReport,
     practiceStats: previous.practiceStats || createEmptyPracticeStats(),
+    growthStats: previous.growthStats,
   });
   saveProgress(platform, savedProgress);
   refreshMenuLayout();

@@ -86,6 +86,36 @@ test('app runtime opens practice difficulty and starts hard practice gameplay', 
   }
 });
 
+test('app runtime records growth stats for campaign and practice completions', () => {
+  const runtime = bootAppRuntime();
+
+  try {
+    tapMenuMode(runtime, 'campaign');
+    completeCurrentLevel(runtime);
+
+    const campaignSave = runtime.latestSave();
+    assert.equal(campaignSave.growthStats.currentStreak, 1);
+    assert.equal(campaignSave.growthStats.todayCompletedCount, 1);
+    assert.equal(campaignSave.growthStats.campaignCompletedCount, 1);
+    assert.equal(campaignSave.growthStats.practiceCompletedCount, 0);
+    assert.deepEqual(campaignSave.completedLevelIds, ['lab-01']);
+
+    tapBack(runtime);
+    tapMenuMode(runtime, 'practice');
+    tapPracticeDifficulty(runtime, 'hard');
+    completeCurrentLevel(runtime);
+
+    const practiceSave = runtime.latestSave();
+    assert.equal(practiceSave.growthStats.currentStreak, 1);
+    assert.equal(practiceSave.growthStats.todayCompletedCount, 2);
+    assert.equal(practiceSave.growthStats.campaignCompletedCount, 1);
+    assert.equal(practiceSave.growthStats.practiceCompletedCount, 1);
+    assert.deepEqual(practiceSave.completedLevelIds, ['lab-01']);
+  } finally {
+    runtime.restore();
+  }
+});
+
 function bootAppRuntime(options = {}) {
   const originalLoad = Module._load;
   const originalAppRuntimeCache = require.cache[appRuntimePath];
@@ -243,6 +273,45 @@ function tapPracticeDifficulty(runtime, difficulty) {
   const card = call.layout.difficultyCards.find((item) => item.difficulty === difficulty);
   assert.ok(card);
   runtime.touch(card.x + card.width / 2, card.y + card.height / 2);
+}
+
+function tapBack(runtime) {
+  const call = runtime.latestGameCall();
+  const button = call.layout.backButton;
+  runtime.touch(button.x + button.width / 2, button.y + button.height / 2);
+}
+
+function completeCurrentLevel(runtime) {
+  let call = runtime.latestGameCall();
+  const level = call.state.level;
+
+  level.givens.forEach((row, rowIndex) => {
+    row.forEach((given, colIndex) => {
+      if (given !== 0) {
+        return;
+      }
+
+      call = runtime.latestGameCall();
+      tapCell(runtime, call.layout, rowIndex, colIndex);
+      tapDigit(runtime, call.layout, level.solution[rowIndex][colIndex]);
+    });
+  });
+
+  assert.equal(runtime.latestGameCall().state.completed, true);
+}
+
+function tapCell(runtime, layout, row, col) {
+  const cellSize = layout.board.size / 9;
+  runtime.touch(
+    layout.board.x + col * cellSize + cellSize / 2,
+    layout.board.y + row * cellSize + cellSize / 2,
+  );
+}
+
+function tapDigit(runtime, layout, digit) {
+  const key = layout.keypad.keys.find((item) => item.digit === digit);
+  assert.ok(key);
+  runtime.touch(key.x + key.width / 2, key.y + key.height / 2);
 }
 
 function createMockCanvasContext() {

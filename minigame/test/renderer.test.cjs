@@ -592,6 +592,23 @@ test('renderer draws saved campaign and practice mode labels', () => {
   assert.equal(text.includes('继续训练'), false);
 });
 
+test('renderer draws homepage campaign progress and growth summary', () => {
+  const ctx = createMockCanvasContext();
+  const menuLayout = createMenuLayout(430, 932, levels, {
+    completedLevelIds: ['lab-01', 'lab-02'],
+    growthStats: {
+      currentStreak: 2,
+      todayCompletedCount: 1,
+    },
+  });
+
+  renderMenu(ctx, menuLayout);
+
+  const text = getDrawnText(ctx);
+  assert.match(text, /闯关进度 2\/24/);
+  assert.match(text, /连续除锈 2 天 · 今日 1 局/);
+});
+
 test('renderer draws brain greenhouse homepage without report copy', () => {
   const ctx = createMockCanvasContext();
   const menuLayout = createMenuLayout(430, 932, levels, {
