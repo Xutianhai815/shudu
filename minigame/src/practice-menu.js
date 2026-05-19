@@ -75,7 +75,7 @@ function createPracticeMenuLayout(width, height, levels, options = {}) {
         description: option.description,
         recommendationText: option.recommendationText,
         enabled,
-        statusLabel: enabled ? (recommended ? '推荐' : '可练习') : '暂未开放',
+        statusLabel: enabled ? (recommended ? '推荐' : null) : '暂未开放',
       };
     }),
   };

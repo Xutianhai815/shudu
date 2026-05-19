@@ -28,10 +28,10 @@ test('createPracticeMenuLayout builds a free training difficulty page on 430x932
       card.statusLabel,
     ]),
     [
-      ['warmup', 'intro', '热身', true, '可练习'],
+      ['warmup', 'intro', '热身', true, null],
       ['steady', 'easy', '稳定', true, '推荐'],
-      ['standard', 'normal', '标准', true, '可练习'],
-      ['advanced', 'hard', '进阶', true, '可练习'],
+      ['standard', 'normal', '标准', true, null],
+      ['advanced', 'hard', '进阶', true, null],
     ],
   );
   assert.ok(layout.difficultyCards.every((card) => card.recommendation === undefined));

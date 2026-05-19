@@ -79,7 +79,7 @@ test('createMenuLayout updates mode card copy when saves exist', () => {
   assert.equal(layout.modeCards.practice.subtitle, null);
 });
 
-test('createMenuLayout summarizes completed campaign progress when no active run exists', () => {
+test('createMenuLayout keeps campaign progress off the home screen', () => {
   const layout = createMenuLayout(430, 932, levels, {
     hasActiveRun: false,
     completedLevelIds: ['lab-01', 'lab-02', 'lab-03'],
@@ -92,10 +92,7 @@ test('createMenuLayout summarizes completed campaign progress when no active run
   assert.equal(layout.modeCards.campaign.title, '闯关挑战');
   assert.equal(layout.modeCards.campaign.buttonLabel, '闯关挑战');
   assert.equal(layout.modeCards.campaign.subtitle, null);
-  assert.deepEqual(layout.campaignProgress, {
-    visible: true,
-    text: '闯关进度 3/24',
-  });
+  assert.equal(layout.campaignProgress, undefined);
   assert.deepEqual(layout.growthSummary, {
     visible: true,
     text: '连续除锈 3 天 · 今日 1 局',
@@ -111,10 +108,7 @@ test('createMenuLayout hides growth summary when there is no streak', () => {
     },
   });
 
-  assert.deepEqual(layout.campaignProgress, {
-    visible: true,
-    text: '闯关进度 1/24',
-  });
+  assert.equal(layout.campaignProgress, undefined);
   assert.deepEqual(layout.growthSummary, {
     visible: false,
     text: '',

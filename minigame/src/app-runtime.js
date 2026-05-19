@@ -241,8 +241,16 @@ function getCampaignLevelNumber(level) {
 }
 
 function createModeContext() {
-  if (currentMode !== 'practice' || !state || !state.level) {
-    return { mode: 'campaign' };
+  if (currentMode !== 'practice') {
+    const levelNumber = state && state.level ? getCampaignLevelNumber(state.level) : 1;
+    return {
+      mode: 'campaign',
+      label: `第 ${levelNumber}/${levels.length} 关`,
+    };
+  }
+
+  if (!state || !state.level) {
+    return { mode: 'practice' };
   }
 
   const option =

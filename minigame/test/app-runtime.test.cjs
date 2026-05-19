@@ -58,6 +58,10 @@ test('app runtime starts campaign gameplay from the home screen and persists the
     const latestSave = runtime.latestSave();
 
     assert.equal(game.state.level.id, 'lab-01');
+    assert.deepEqual(game.options.modeContext, {
+      mode: 'campaign',
+      label: `第 1/${levels.length} 关`,
+    });
     assert.equal(latestSave.activeRun.mode, 'campaign');
     assert.equal(latestSave.activeRun.levelId, 'lab-01');
   } finally {

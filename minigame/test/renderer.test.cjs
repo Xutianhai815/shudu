@@ -14,11 +14,19 @@ test('renderer draws the first level without a browser or WeChat canvas', () => 
   const state = createPuzzleState(levels[0]);
   const layout = createLayout(430, 932);
 
-  renderGame(ctx, state, layout);
+  renderGame(ctx, state, layout, {
+    modeContext: {
+      mode: 'campaign',
+      label: `第 1/${levels.length} 关`,
+    },
+  });
 
+  const text = getDrawnText(ctx);
   assert.ok(ctx.calls.length > 0);
   assert.ok(ctx.calls.some((call) => call.name === 'fillText' && call.args.includes(levels[0].title)));
-  assert.equal(getDrawnText(ctx).includes('基础数独'), false);
+  assert.match(text, /第 1\/24 关/);
+  assert.equal(text.includes(levels[0].label), false);
+  assert.equal(text.includes('基础数独'), false);
 });
 
 test('renderer draws second level metadata and victory overlay without throwing', () => {
@@ -622,7 +630,7 @@ test('renderer draws saved campaign and practice mode labels', () => {
   assert.equal(text.includes('继续训练'), false);
 });
 
-test('renderer draws homepage campaign progress and growth summary', () => {
+test('renderer draws homepage growth summary without campaign progress', () => {
   const ctx = createMockCanvasContext();
   const menuLayout = createMenuLayout(430, 932, levels, {
     completedLevelIds: ['lab-01', 'lab-02'],
@@ -635,8 +643,21 @@ test('renderer draws homepage campaign progress and growth summary', () => {
   renderMenu(ctx, menuLayout);
 
   const text = getDrawnText(ctx);
-  assert.match(text, /闯关进度 2\/24/);
+  assert.equal(text.includes('闯关进度 2/24'), false);
   assert.match(text, /连续除锈 2 天 · 今日 1 局/);
+});
+
+test('renderer omits available practice status pills while keeping recommendation', () => {
+  const ctx = createMockCanvasContext();
+  const practiceLayout = createPracticeMenuLayout(430, 932, levels, {
+    recommendedTrainingDifficulty: 'steady',
+  });
+
+  renderPracticeMenu(ctx, practiceLayout);
+
+  const text = getDrawnText(ctx);
+  assert.match(text, /推荐/);
+  assert.equal(text.includes('可练习'), false);
 });
 
 test('renderer draws brain greenhouse homepage without report copy', () => {

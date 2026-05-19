@@ -248,7 +248,7 @@ function drawMenuActions(ctx, layout) {
 }
 
 function drawMenuProgressSummaries(ctx, layout) {
-  const summaries = [layout.campaignProgress, layout.growthSummary].filter(
+  const summaries = [layout.growthSummary].filter(
     (summary) => summary && summary.visible && summary.text,
   );
 
@@ -422,7 +422,9 @@ function drawPracticeDifficultyCards(ctx, layout) {
     setFont(ctx, layout, layout.compact ? '800 11px sans-serif' : '800 13px sans-serif');
     ctx.fillText(card.description, card.x + 32, card.y + (layout.compact ? 51 : 62));
 
-    drawPracticeStatusPill(ctx, layout, card, card.statusLabel, statusFill, statusColor);
+    if (card.statusLabel) {
+      drawPracticeStatusPill(ctx, layout, card, card.statusLabel, statusFill, statusColor);
+    }
 
     if (enabled) {
       ctx.fillStyle = 'rgba(24, 33, 31, 0.42)';
@@ -442,7 +444,7 @@ function getPracticeRailColor(index) {
 }
 
 function drawPracticeStatusPill(ctx, layout, card, text, fill, color) {
-  const label = text || '可练习';
+  const label = text;
   const width = Math.max(58, measureTextWidth(ctx, label) * 0.72 + 20);
   const x = card.x + card.width - width - 42;
   const y = card.y + 16;

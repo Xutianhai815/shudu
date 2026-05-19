@@ -61,7 +61,6 @@ function createMenuLayout(width, height, levels, progressSummary = {}) {
     completedLevelIds,
   });
   const practiceCopy = createPracticeCardCopy();
-  const completedCount = countKnownCompletedLevels(completedLevelIds, levels);
 
   const modeCards = {
     campaign: {
@@ -112,10 +111,6 @@ function createMenuLayout(width, height, levels, progressSummary = {}) {
       radius: particle.radius,
       color: particle.color,
     })),
-    campaignProgress: {
-      visible: true,
-      text: `闯关进度 ${completedCount}/${Array.isArray(levels) ? levels.length : 0}`,
-    },
     growthSummary: createGrowthSummary(growthStats),
     modeCards,
     derustSummary: { visible: false },
