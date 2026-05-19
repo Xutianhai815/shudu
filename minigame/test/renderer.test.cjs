@@ -18,6 +18,7 @@ test('renderer draws the first level without a browser or WeChat canvas', () => 
 
   assert.ok(ctx.calls.length > 0);
   assert.ok(ctx.calls.some((call) => call.name === 'fillText' && call.args.includes(levels[0].title)));
+  assert.equal(getDrawnText(ctx).includes('基础数独'), false);
 });
 
 test('renderer draws second level metadata and victory overlay without throwing', () => {
@@ -431,7 +432,7 @@ test('renderer draws the menu without throwing', () => {
       x: 22,
       y: 72,
       text: 'Lab Lines Sudoku',
-      subtitle: '数独实验室',
+      subtitle: '一一数独',
     },
     modeCards: {
       campaign: {
@@ -458,7 +459,7 @@ test('renderer draws the menu without throwing', () => {
 
   renderMenu(ctx, menuLayout);
 
-  assert.ok(ctx.calls.some((call) => call.name === 'fillText' && call.args.includes('数独实验室')));
+  assert.ok(ctx.calls.some((call) => call.name === 'fillText' && call.args.includes('一一数独')));
   assert.ok(ctx.calls.some((call) => call.name === 'fillText' && call.args.includes('闯关挑战')));
   assert.ok(ctx.calls.some((call) => call.name === 'fillText' && call.args.includes('自由练习')));
   assert.equal(getDrawnText(ctx).includes('从 LAB-01 开始'), false);
@@ -479,7 +480,7 @@ test('renderer ignores legacy menu buttons when mode cards are present', () => {
       x: 22,
       y: 72,
       text: 'Lab Lines Sudoku',
-      subtitle: '数独实验室',
+      subtitle: '一一数独',
     },
     modeCards: {
       campaign: {
@@ -601,7 +602,7 @@ test('renderer draws brain greenhouse homepage without report copy', () => {
   renderMenu(ctx, menuLayout);
 
   const text = getDrawnText(ctx);
-  assert.match(text, /数独实验室/);
+  assert.match(text, /一一数独/);
   assert.match(text, /每天打开一局，给大脑做一次轻量热身。/);
   assert.match(text, /闯关挑战/);
   assert.match(text, /自由练习/);
@@ -610,13 +611,38 @@ test('renderer draws brain greenhouse homepage without report copy', () => {
   assert.equal(/今日报告|今日除锈|累计除锈|今日第一局/.test(text), false);
 });
 
-test('renderer gives simplified homepage buttons large label text', () => {
+test('renderer gives simplified homepage buttons comfortable label text', () => {
   const ctx = createMockCanvasContext();
   const menuLayout = createMenuLayout(430, 932, levels);
 
   renderMenu(ctx, menuLayout);
 
-  assert.ok(ctx.calls.some((call) => call.name === 'set:font' && call.args[0] === '950 33px sans-serif'));
+  assert.ok(ctx.calls.some((call) => call.name === 'set:font' && call.args[0] === '900 34px sans-serif'));
+});
+
+test('renderer ignores legacy home font diagnostics before review submission', () => {
+  const ctx = createMockCanvasContext();
+  const menuLayout = createMenuLayout(390, 844, levels, {
+    debugOverlay: {
+      metricsText: 'DBG home-font-v2 w390 h844 dpr3 font42 w900',
+      calibrationText: '字42',
+    },
+  });
+
+  renderMenu(ctx, menuLayout);
+
+  const text = getDrawnText(ctx);
+  assert.equal(/DBG|home-font-v2|font42|字42/.test(text), false);
+});
+
+test('renderer clamps unsupported canvas font weights before drawing', () => {
+  const ctx = createMockCanvasContext();
+  const menuLayout = createMenuLayout(390, 844, levels);
+
+  renderMenu(ctx, menuLayout);
+
+  assert.equal(ctx.calls.some((call) => call.name === 'set:font' && /^950\b/.test(call.args[0])), false);
+  assert.ok(ctx.calls.some((call) => call.name === 'set:font' && call.args[0] === '900 34px sans-serif'));
 });
 
 test('renderer draws the nine-by-nine sudoku hero board', () => {

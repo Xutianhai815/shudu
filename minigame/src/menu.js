@@ -95,7 +95,7 @@ function createMenuLayout(width, height, levels, progressSummary = {}) {
       x: margin,
       y: titleY,
       text: 'Lab Lines Sudoku',
-      subtitle: '数独实验室',
+      subtitle: '一一数独',
     },
     heroSubtitle: '每天打开一局，给大脑做一次轻量热身。',
     heroBoard: {

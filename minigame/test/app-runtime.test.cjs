@@ -11,9 +11,37 @@ test('app runtime boots to the mode menu', () => {
 
   try {
     assert.ok(runtime.latestMenuCall());
-    assert.match(runtime.drawnText(), /数独实验室/);
+    assert.match(runtime.drawnText(), /一一数独/);
     assert.match(runtime.drawnText(), /闯关挑战/);
     assert.match(runtime.drawnText(), /自由练习/);
+  } finally {
+    runtime.restore();
+  }
+});
+
+test('app runtime does not expose home font diagnostics in review builds', () => {
+  const runtime = bootAppRuntime({
+    systemInfo: { pixelRatio: 3, windowWidth: 390, windowHeight: 844, platform: 'ios' },
+  });
+
+  try {
+    const menuLayout = runtime.latestMenuCall().layout;
+
+    assert.equal(menuLayout.canvasTextScale, 1);
+    assert.equal(menuLayout.debugOverlay, undefined);
+    assert.equal(/DBG|home-font|font42/.test(runtime.drawnText()), false);
+  } finally {
+    runtime.restore();
+  }
+});
+
+test('app runtime keeps simulator font scale unchanged', () => {
+  const runtime = bootAppRuntime({
+    systemInfo: { pixelRatio: 3, windowWidth: 390, windowHeight: 844, platform: 'devtools' },
+  });
+
+  try {
+    assert.equal(runtime.latestMenuCall().layout.canvasTextScale, 1);
   } finally {
     runtime.restore();
   }

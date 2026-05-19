@@ -249,7 +249,7 @@ test('huawei h5 build produces a bundle containing startup modules', () => {
 
   assert.match(bundle, /createAppRuntime/);
   assert.match(bundle, /createH5Platform/);
-  assert.match(bundle, /数独实验室/);
+  assert.match(bundle, /一一数独/);
 });
 
 function createMockBrowser(options = {}) {

@@ -21,7 +21,7 @@ test('runtime completes the active level through normal player input and persist
     assert.match(runtime.drawnText(), /LAB CLEAR/);
     assert.match(runtime.drawnText(), /第 1 关完成/);
     assert.match(runtime.drawnText(), /下一关已解锁/);
-    assert.match(runtime.drawnText(), /1 \/ 12/);
+    assert.match(runtime.drawnText(), /1 \/ 24/);
     assert.match(runtime.drawnText(), /下一关/);
     assert.equal(runtime.drawnText().includes('同难度再来一局'), false);
     assert.equal(runtime.drawnText().includes('回首页'), false);
@@ -195,7 +195,7 @@ test('runtime homepage hides daily report copy', () => {
 
   try {
     assert.equal(/今日报告|今日除锈|累计除锈|今日第一局/.test(runtime.drawnText()), false);
-    assert.match(runtime.drawnText(), /数独实验室/);
+    assert.match(runtime.drawnText(), /一一数独/);
   } finally {
     runtime.restore();
   }
@@ -372,7 +372,7 @@ test('runtime passes quiet companion feedback for later levels without revealing
 
   try {
     startGame(runtime);
-    advanceCompletedLevels(runtime, 6);
+    advanceCompletedLevels(runtime, 10);
     fillMutableCells(runtime, 5);
 
     const game = runtime.latestGameCall();
@@ -408,7 +408,7 @@ test('runtime schedules companion toast expiry redraw', () => {
 
   try {
     startGame(runtime);
-    advanceCompletedLevels(runtime, 6);
+    advanceCompletedLevels(runtime, 10);
     fillMutableCells(runtime, 5);
 
     assert.ok(runtime.latestGameCall().companionFeedback.toast);

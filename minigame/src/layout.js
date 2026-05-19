@@ -24,7 +24,15 @@ function createLayout(width, height, options = {}) {
   const margin = 18;
   const compact = height < 760;
   const topY = Math.max(compact ? 12 : 20, normalizeTopInset(topInset, height));
-  const topBar = { x: margin, y: topY, width: width - margin * 2, height: compact ? 42 : 46 };
+  const topControlHeight = 44;
+  const modeSwitchHeight = 32;
+  const modeSwitchGap = compact ? 4 : 8;
+  const topBar = {
+    x: margin,
+    y: topY,
+    width: width - margin * 2,
+    height: topControlHeight + modeSwitchGap + modeSwitchHeight,
+  };
   const ruleStripY = topBar.y + topBar.height + 8;
   const ruleStrip = { x: margin, y: ruleStripY, width: topBar.width, height: compact ? 24 : 28 };
   const toolsHeight = compact ? 48 : 58;
@@ -62,13 +70,13 @@ function createLayout(width, height, options = {}) {
       x: topBar.x,
       y: topBar.y,
       width: 44,
-      height: 44,
+      height: topControlHeight,
     },
     modeSwitchButton: {
-      x: topBar.x + topBar.width - 76,
-      y: topBar.y + 7,
+      x: topBar.x + 58,
+      y: topBar.y + topControlHeight + modeSwitchGap,
       width: 76,
-      height: 32,
+      height: modeSwitchHeight,
       action: 'practiceDifficulty',
     },
     ruleStrip,

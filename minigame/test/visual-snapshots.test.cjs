@@ -6,7 +6,7 @@ const { createVisualSnapshots } = require('../tools/render-snapshots');
 test('visual snapshot renderer produces key menu gameplay and victory SVGs', () => {
   const snapshots = createVisualSnapshots();
 
-  assert.match(snapshots.menu, /数独实验室/);
+  assert.match(snapshots.menu, /一一数独/);
   assert.match(snapshots.menu, /每天打开一局/);
   assert.match(snapshots.menu, /#17312b/);
   assert.match(snapshots.menu, /rgba\(22, 163, 160/);

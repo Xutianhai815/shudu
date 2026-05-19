@@ -1,11 +1,13 @@
 const { getCellFlags } = require('./puzzle');
 
+const FONT_SCALE_BY_CONTEXT = new WeakMap();
+
 const DEFAULT_COMPLETION_FEEDBACK = {
   label: 'LAB RESULT',
   title: '大脑除锈完成',
   deltaText: '+0.01%',
   metricLabel: '今日脑力光泽度',
-  subtitle: '你的前额叶刚刚完成了一次俯卧撑。请继续保持嚣张。',
+  subtitle: '你的脑力刚刚完成了一次轻量热身。请继续保持嚣张。',
   disclaimer: '娱乐数值，不代表医学效果。',
   stats: [
     { label: '今日训练', value: '1 次' },
@@ -114,16 +116,16 @@ function drawMenuAmbientParticles(ctx, layout) {
 
 function drawMenuHero(ctx, layout) {
   ctx.fillStyle = '#18211f';
-  ctx.font = layout.compact ? '900 31px sans-serif' : '900 36px sans-serif';
+  setFont(ctx, layout, layout.compact ? '900 31px sans-serif' : '900 36px sans-serif');
   ctx.fillText(layout.title.subtitle, layout.title.x, layout.title.y);
 
   ctx.fillStyle = 'rgba(24, 33, 31, 0.58)';
-  ctx.font = '800 13px sans-serif';
+  setFont(ctx, layout, '800 13px sans-serif');
   ctx.fillText(layout.title.text, layout.title.x, layout.title.y + 28);
 
   if (layout.heroSubtitle) {
     ctx.fillStyle = 'rgba(24, 33, 31, 0.68)';
-    ctx.font = layout.compact ? '800 13px sans-serif' : '800 14px sans-serif';
+    setFont(ctx, layout, layout.compact ? '800 13px sans-serif' : '800 14px sans-serif');
     ctx.fillText(layout.heroSubtitle, layout.title.x, layout.title.y + (layout.compact ? 58 : 64));
   }
 }
@@ -163,7 +165,7 @@ function drawMenuHeroBoard(ctx, layout) {
 
     if (cell && cell.value > 0) {
       ctx.fillStyle = '#17312b';
-      ctx.font = '900 10px sans-serif';
+      setFont(ctx, layout, '900 10px sans-serif');
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText(String(cell.value), x + cellSize / 2, y + cellSize / 2 + 0.5);
@@ -229,22 +231,22 @@ function drawMenuBoardGrid(ctx, x, y, size) {
 
 function drawMenuActions(ctx, layout) {
   if (layout.modeCards) {
-    drawMenuModeCards(ctx, layout.modeCards);
+    drawMenuModeCards(ctx, layout, layout.modeCards);
     return;
   }
 
   if (layout.continueButton) {
-    drawMenuButton(ctx, layout.continueButton, layout.continueButton.label, '#18211f', '#ffffff');
-    drawMenuButton(ctx, layout.primaryButton, layout.primaryButton.label, 'rgba(255, 255, 255, 0.72)', '#18211f');
+    drawMenuButton(ctx, layout, layout.continueButton, layout.continueButton.label, '#18211f', '#ffffff');
+    drawMenuButton(ctx, layout, layout.primaryButton, layout.primaryButton.label, 'rgba(255, 255, 255, 0.72)', '#18211f');
     return;
   }
 
   if (layout.primaryButton) {
-    drawMenuButton(ctx, layout.primaryButton, layout.primaryButton.label, '#18211f', '#ffffff');
+    drawMenuButton(ctx, layout, layout.primaryButton, layout.primaryButton.label, '#18211f', '#ffffff');
   }
 }
 
-function drawMenuModeCards(ctx, modeCards) {
+function drawMenuModeCards(ctx, layout, modeCards) {
   const cards = [modeCards.campaign, modeCards.practice].filter(Boolean);
 
   cards.forEach((card, index) => {
@@ -260,7 +262,7 @@ function drawMenuModeCards(ctx, modeCards) {
     roundRect(ctx, card.x + 12, card.y + 10, 6, card.height - 20, 3, railColor);
 
     ctx.fillStyle = titleColor;
-    ctx.font = minimal ? '950 33px sans-serif' : '950 20px sans-serif';
+    setFont(ctx, layout, minimal ? '950 34px sans-serif' : '950 20px sans-serif');
     ctx.textAlign = 'left';
     ctx.textBaseline = minimal ? 'middle' : 'alphabetic';
     ctx.fillText(card.title, card.x + 30, minimal ? card.y + card.height / 2 + 1 : card.y + 27);
@@ -268,22 +270,22 @@ function drawMenuModeCards(ctx, modeCards) {
 
     if (card.subtitle) {
       ctx.fillStyle = primary ? 'rgba(255, 255, 255, 0.66)' : 'rgba(24, 33, 31, 0.58)';
-      ctx.font = '800 11px sans-serif';
+      setFont(ctx, layout, '800 11px sans-serif');
       ctx.fillText(card.subtitle, card.x + 32, card.y + 46);
     }
 
     if (Array.isArray(card.difficultyDots) && card.difficultyDots.length > 0) {
-      drawMenuDifficultyDots(ctx, card, primary);
+      drawMenuDifficultyDots(ctx, layout, card, primary);
     }
 
     if (!minimal) {
       ctx.fillStyle = labelColor;
-      ctx.font = '900 15px sans-serif';
+      setFont(ctx, layout, '900 15px sans-serif');
       ctx.fillText(card.buttonLabel || card.label, card.x + 32, card.y + card.height - 12);
     }
 
     ctx.fillStyle = primary ? 'rgba(255, 255, 255, 0.72)' : 'rgba(24, 33, 31, 0.44)';
-    ctx.font = '900 22px sans-serif';
+    setFont(ctx, layout, '900 22px sans-serif');
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText('›', card.x + card.width - 24, card.y + card.height / 2);
@@ -292,7 +294,7 @@ function drawMenuModeCards(ctx, modeCards) {
   });
 }
 
-function drawMenuDifficultyDots(ctx, card, primary) {
+function drawMenuDifficultyDots(ctx, layout, card, primary) {
   let dotX = card.x + 32;
   const dotY = card.y + card.height - 34;
 
@@ -308,7 +310,7 @@ function drawMenuDifficultyDots(ctx, card, primary) {
       primary ? 'rgba(255, 255, 255, 0.14)' : 'rgba(22, 163, 160, 0.1)',
     );
     ctx.fillStyle = primary ? 'rgba(255, 255, 255, 0.72)' : 'rgba(8, 116, 113, 0.78)';
-    ctx.font = '850 10px sans-serif';
+    setFont(ctx, layout, '850 10px sans-serif');
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(label, dotX + width / 2, dotY + 9.5);
@@ -319,10 +321,10 @@ function drawMenuDifficultyDots(ctx, card, primary) {
   ctx.textBaseline = 'alphabetic';
 }
 
-function drawMenuButton(ctx, rect, label, fill, color) {
+function drawMenuButton(ctx, layout, rect, label, fill, color) {
   roundRect(ctx, rect.x, rect.y, rect.width, rect.height, 18, fill);
   ctx.fillStyle = color;
-  ctx.font = '900 18px sans-serif';
+  setFont(ctx, layout, '900 18px sans-serif');
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillText(label, rect.x + rect.width / 2, rect.y + rect.height / 2 + 1);
@@ -336,7 +338,7 @@ function drawPracticeMenuHeader(ctx, layout) {
   if (back) {
     roundRect(ctx, back.x, back.y, back.width, back.height, back.height / 2, 'rgba(255, 255, 255, 0.72)');
     ctx.fillStyle = '#18211f';
-    ctx.font = '900 14px sans-serif';
+    setFont(ctx, layout, '900 14px sans-serif');
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(back.label || '返回', back.x + back.width / 2, back.y + back.height / 2 + 0.5);
@@ -344,7 +346,7 @@ function drawPracticeMenuHeader(ctx, layout) {
 
   if (layout.title) {
     ctx.fillStyle = '#18211f';
-    ctx.font = layout.compact ? '950 34px sans-serif' : '950 42px sans-serif';
+    setFont(ctx, layout, layout.compact ? '950 34px sans-serif' : '950 42px sans-serif');
     ctx.textAlign = 'left';
     ctx.textBaseline = 'alphabetic';
     ctx.fillText(layout.title.text, layout.title.x, layout.title.y);
@@ -352,7 +354,7 @@ function drawPracticeMenuHeader(ctx, layout) {
 
   if (layout.subtitle) {
     ctx.fillStyle = 'rgba(24, 33, 31, 0.62)';
-    ctx.font = layout.compact ? '850 13px sans-serif' : '850 15px sans-serif';
+    setFont(ctx, layout, layout.compact ? '850 13px sans-serif' : '850 15px sans-serif');
     ctx.fillText(layout.subtitle.text, layout.subtitle.x, layout.subtitle.y);
   }
 
@@ -377,20 +379,20 @@ function drawPracticeDifficultyCards(ctx, layout) {
     roundRect(ctx, card.x + 14, card.y + 16, 6, card.height - 32, 3, railColor);
 
     ctx.fillStyle = titleColor;
-    ctx.font = layout.compact ? '950 21px sans-serif' : '950 24px sans-serif';
+    setFont(ctx, layout, layout.compact ? '950 21px sans-serif' : '950 24px sans-serif');
     ctx.textAlign = 'left';
     ctx.textBaseline = 'alphabetic';
     ctx.fillText(card.label, card.x + 32, card.y + (layout.compact ? 30 : 36));
 
     ctx.fillStyle = bodyColor;
-    ctx.font = layout.compact ? '800 11px sans-serif' : '800 13px sans-serif';
+    setFont(ctx, layout, layout.compact ? '800 11px sans-serif' : '800 13px sans-serif');
     ctx.fillText(card.description, card.x + 32, card.y + (layout.compact ? 51 : 62));
 
-    drawPracticeStatusPill(ctx, card, card.statusLabel, statusFill, statusColor);
+    drawPracticeStatusPill(ctx, layout, card, card.statusLabel, statusFill, statusColor);
 
     if (enabled) {
       ctx.fillStyle = 'rgba(24, 33, 31, 0.42)';
-      ctx.font = '900 22px sans-serif';
+      setFont(ctx, layout, '900 22px sans-serif');
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText('›', card.x + card.width - 28, card.y + card.height / 2);
@@ -405,7 +407,7 @@ function getPracticeRailColor(index) {
   return ['#16a3a0', '#6ea64e', '#d79b27', '#18211f'][index % 4];
 }
 
-function drawPracticeStatusPill(ctx, card, text, fill, color) {
+function drawPracticeStatusPill(ctx, layout, card, text, fill, color) {
   const label = text || '可练习';
   const width = Math.max(58, measureTextWidth(ctx, label) * 0.72 + 20);
   const x = card.x + card.width - width - 42;
@@ -413,7 +415,7 @@ function drawPracticeStatusPill(ctx, card, text, fill, color) {
 
   roundRect(ctx, x, y, width, 24, 12, fill);
   ctx.fillStyle = color;
-  ctx.font = '900 11px sans-serif';
+  setFont(ctx, layout, '900 11px sans-serif');
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillText(label, x + width / 2, y + 12.5);
@@ -456,7 +458,7 @@ function drawCompanionToast(ctx, layout) {
 
   roundRect(ctx, x, y, width, 26, 13, 'rgba(11, 36, 29, 0.78)');
   ctx.fillStyle = 'rgba(246, 255, 244, 0.92)';
-  ctx.font = '850 12px sans-serif';
+  setFont(ctx, layout, '850 12px sans-serif');
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillText(toast.text, layout.width / 2, y + 14);
@@ -482,13 +484,13 @@ function drawTopBar(ctx, layout) {
   const label = layout.modeContext.label || layout.level.label;
   const title = layout.modeContext.title || layout.level.title;
 
-  drawButton(ctx, topBar.x, topBar.y, buttonSize, buttonSize, '‹', colors.surfaceStrong, colors.ink);
+  drawButton(ctx, layout, topBar.x, topBar.y, buttonSize, buttonSize, '‹', colors.surfaceStrong, colors.ink);
 
   ctx.fillStyle = colors.muted;
-  ctx.font = '700 10px sans-serif';
+  setFont(ctx, layout, '700 10px sans-serif');
   ctx.fillText(label, topBar.x + 58, topBar.y + 14);
   ctx.fillStyle = colors.ink;
-  ctx.font = '800 17px sans-serif';
+  setFont(ctx, layout, '800 17px sans-serif');
   ctx.fillText(title, topBar.x + 58, topBar.y + 36);
 
   if (layout.modeContext.mode === 'practice' && layout.modeSwitchButton) {
@@ -501,7 +503,7 @@ function drawModeSwitchButton(ctx, layout) {
 
   roundRect(ctx, button.x, button.y, button.width, button.height, 12, 'rgba(255, 255, 255, 0.72)');
   ctx.fillStyle = '#087471';
-  ctx.font = '850 12px sans-serif';
+  setFont(ctx, layout, '850 12px sans-serif');
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillText('换难度', button.x + button.width / 2, button.y + button.height / 2 + 1);
@@ -512,8 +514,7 @@ function drawModeSwitchButton(ctx, layout) {
 function drawRuleStrip(ctx, layout) {
   const { colors, ruleStrip } = layout;
   const rules = layout.level.rules.filter((rule) => rule !== 'classic');
-  const chipData = rules.length > 0 ? rules : ['classic'];
-  chipData.forEach((rule, index) => {
+  rules.forEach((rule, index) => {
     const label = getRuleLabel(rule);
     chip(
       ctx,
@@ -524,6 +525,7 @@ function drawRuleStrip(ctx, layout) {
       label,
       'rgba(24, 33, 31, 0.08)',
       colors.muted,
+      layout,
     );
   });
 }
@@ -572,17 +574,17 @@ function drawBoard(ctx, state, layout) {
       ctx.strokeRect(x + 2, y + 2, cellSize - 4, cellSize - 4);
     }
 
-    drawCellValue(ctx, cell, flags, x, y, cellSize, colors);
+    drawCellValue(ctx, layout, cell, flags, x, y, cellSize, colors);
   });
 
   drawGrid(ctx, board, cellSize, colors);
   ctx.restore();
 }
 
-function drawCellValue(ctx, cell, flags, x, y, cellSize, colors) {
+function drawCellValue(ctx, layout, cell, flags, x, y, cellSize, colors) {
   if (cell.value !== 0) {
     ctx.fillStyle = cell.fixed ? colors.ink : '#087471';
-    ctx.font = '900 31px sans-serif';
+    setFont(ctx, layout, '900 31px sans-serif');
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(String(cell.value), x + cellSize / 2, y + cellSize / 2 + 1);
@@ -596,7 +598,7 @@ function drawCellValue(ctx, cell, flags, x, y, cellSize, colors) {
   }
 
   ctx.fillStyle = 'rgba(24, 33, 31, 0.48)';
-  ctx.font = '800 9px sans-serif';
+  setFont(ctx, layout, '800 9px sans-serif');
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   for (let digit = 1; digit <= 9; digit += 1) {
@@ -677,31 +679,32 @@ function drawCampaignVictoryContent(ctx, layout, feedback) {
 
   roundRect(ctx, x + 22, y + 20, 104, 24, 8, 'rgba(255, 200, 97, 0.15)');
   ctx.fillStyle = '#ffc861';
-  ctx.font = '900 11px sans-serif';
+  setFont(ctx, layout, '900 11px sans-serif');
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillText(feedback.label === 'LAB RESULT' ? 'LAB CLEAR' : feedback.label, x + 74, y + 32);
 
   ctx.fillStyle = '#f6fff4';
-  ctx.font = '950 26px sans-serif';
+  setFont(ctx, layout, '950 26px sans-serif');
   ctx.fillText(feedback.title, x + panel.width / 2, y + 74);
 
   drawCampaignUnlockBadge(ctx, x + panel.width / 2, y + 140);
 
   ctx.fillStyle = '#ffc861';
-  ctx.font = '900 17px sans-serif';
+  setFont(ctx, layout, '900 17px sans-serif');
   ctx.fillText(feedback.unlockText, x + panel.width / 2, y + 214);
 
   ctx.fillStyle = 'rgba(246, 255, 244, 0.68)';
-  ctx.font = '850 12px sans-serif';
+  setFont(ctx, layout, '850 12px sans-serif');
   ctx.fillText(feedback.progressText, x + panel.width / 2, y + 238);
 
   ctx.fillStyle = 'rgba(246, 255, 244, 0.9)';
-  ctx.font = '850 13px sans-serif';
+  setFont(ctx, layout, '850 13px sans-serif');
   ctx.fillText(feedback.subtitle, x + panel.width / 2, y + 267);
 
   drawVictoryButton(
     ctx,
+    layout,
     campaignNext.x,
     campaignNext.y,
     campaignNext.width,
@@ -754,37 +757,38 @@ function drawPracticeVictoryContent(ctx, layout, feedback, colors) {
 
   roundRect(ctx, x + 22, y + 20, 104, 24, 8, 'rgba(255, 200, 97, 0.15)');
   ctx.fillStyle = '#ffc861';
-  ctx.font = '900 11px sans-serif';
+  setFont(ctx, layout, '900 11px sans-serif');
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillText(feedback.label, x + 74, y + 32);
 
   ctx.fillStyle = '#f6fff4';
-  ctx.font = '900 24px sans-serif';
+  setFont(ctx, layout, '900 24px sans-serif');
   ctx.fillText(feedback.title, x + panel.width / 2, y + 72);
 
   ctx.fillStyle = '#ffc861';
-  ctx.font = '950 42px sans-serif';
+  setFont(ctx, layout, '950 42px sans-serif');
   ctx.fillText(feedback.deltaText, x + panel.width / 2, y + 118);
 
   ctx.fillStyle = 'rgba(246, 255, 244, 0.72)';
-  ctx.font = '850 12px sans-serif';
+  setFont(ctx, layout, '850 12px sans-serif');
   ctx.fillText(feedback.metricLabel, x + panel.width / 2, y + 146);
 
-  drawVictoryDerustStats(ctx, x + 22, y + 164, panel.width - 44, feedback.stats, colors);
+  drawVictoryDerustStats(ctx, layout, x + 22, y + 164, panel.width - 44, feedback.stats, colors);
 
   ctx.fillStyle = 'rgba(246, 255, 244, 0.9)';
-  ctx.font = '850 13px sans-serif';
+  setFont(ctx, layout, '850 13px sans-serif');
   wrapText(ctx, feedback.subtitle, x + 28, y + 230, panel.width - 56, 18);
 
   ctx.fillStyle = 'rgba(246, 255, 244, 0.58)';
-  ctx.font = '800 11px sans-serif';
+  setFont(ctx, layout, '800 11px sans-serif');
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillText(feedback.disclaimer, x + panel.width / 2, y + 278);
 
   drawVictoryButton(
     ctx,
+    layout,
     restart.x,
     restart.y,
     restart.width,
@@ -792,7 +796,7 @@ function drawPracticeVictoryContent(ctx, layout, feedback, colors) {
     'rgba(246, 255, 244, 0.9)',
     '#0b241d',
   );
-  drawVictoryButton(ctx, next.x, next.y, next.width, layout.victoryActions.next, '#ffc861', '#0b241d');
+  drawVictoryButton(ctx, layout, next.x, next.y, next.width, layout.victoryActions.next, '#ffc861', '#0b241d');
 }
 
 function createDefaultCompletionFeedback(state) {
@@ -860,25 +864,25 @@ function normalizeVictoryActions(victoryActions) {
   };
 }
 
-function drawVictoryDerustStats(ctx, x, y, width, stats, colors) {
+function drawVictoryDerustStats(ctx, layout, x, y, width, stats, colors) {
   const gap = 10;
   const statWidth = (width - gap) / 2;
   const safeStats = Array.isArray(stats) ? stats.slice(0, 2) : createDefaultCompletionFeedback({}).stats;
 
   safeStats.forEach((stat, index) => {
-    drawVictoryStat(ctx, x + index * (statWidth + gap), y, statWidth, stat, colors);
+    drawVictoryStat(ctx, layout, x + index * (statWidth + gap), y, statWidth, stat, colors);
   });
 }
 
-function drawVictoryStat(ctx, x, y, width, stat, colors) {
+function drawVictoryStat(ctx, layout, x, y, width, stat, colors) {
   roundRect(ctx, x, y, width, 48, 12, 'rgba(246, 255, 244, 0.12)');
   ctx.fillStyle = 'rgba(246, 255, 244, 0.62)';
-  ctx.font = '800 10px sans-serif';
+  setFont(ctx, layout, '800 10px sans-serif');
   ctx.textAlign = 'left';
   ctx.textBaseline = 'alphabetic';
   ctx.fillText(stat.label, x + 12, y + 18);
   ctx.fillStyle = '#ffc861';
-  ctx.font = '950 18px sans-serif';
+  setFont(ctx, layout, '950 18px sans-serif');
   ctx.fillText(stat.value, x + 12, y + 38);
 }
 
@@ -911,13 +915,60 @@ function measureTextWidth(ctx, text) {
   }
 
   const measurement = ctx.measureText(text);
-  return measurement && Number.isFinite(measurement.width) ? measurement.width : String(text).length * 10;
+  const width = measurement && Number.isFinite(measurement.width) ? measurement.width : String(text).length * 10;
+  const scale = FONT_SCALE_BY_CONTEXT.get(ctx) || 1;
+
+  return width / scale;
 }
 
-function drawVictoryButton(ctx, x, y, width, label, fill, color) {
+function setFont(ctx, layout, font) {
+  const scale = getTextScale(layout);
+  FONT_SCALE_BY_CONTEXT.set(ctx, scale);
+  ctx.font = scaleFont(sanitizeFontWeight(font), scale);
+}
+
+function getTextScale(layout) {
+  const scale = Number(layout && layout.canvasTextScale);
+
+  if (!Number.isFinite(scale) || scale <= 1) {
+    return 1;
+  }
+
+  return scale;
+}
+
+function scaleFont(font, scale) {
+  if (scale === 1) {
+    return font;
+  }
+
+  return String(font).replace(/(\d+(?:\.\d+)?)px/g, (_, value) => `${formatFontSize(Number(value) * scale)}px`);
+}
+
+function formatFontSize(value) {
+  if (!Number.isFinite(value)) {
+    return '0';
+  }
+
+  return Number.isInteger(value) ? String(value) : value.toFixed(2).replace(/\.?0+$/, '');
+}
+
+function sanitizeFontWeight(font) {
+  return String(font).replace(/\b(\d{3,4})(?=\s+\d+(?:\.\d+)?px)/g, (_, weight) => {
+    const numericWeight = Number(weight);
+
+    if (!Number.isFinite(numericWeight)) {
+      return weight;
+    }
+
+    return String(Math.min(900, Math.max(100, numericWeight)));
+  });
+}
+
+function drawVictoryButton(ctx, layout, x, y, width, label, fill, color) {
   roundRect(ctx, x, y, width, 38, 12, fill);
   ctx.fillStyle = color;
-  ctx.font = '900 14px sans-serif';
+  setFont(ctx, layout, '900 14px sans-serif');
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillText(label, x + width / 2, y + 19);
@@ -939,12 +990,12 @@ function drawTools(ctx, layout) {
 
     roundRect(ctx, rect.x, rect.y, rect.width, rect.height, 10, fill);
     ctx.fillStyle = ink;
-    ctx.font = '900 26px sans-serif';
+    setFont(ctx, layout, '900 26px sans-serif');
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(tools[index][0], rect.x + rect.width / 2, rect.y + rect.height * 0.38);
     ctx.fillStyle = disabled ? 'rgba(113, 129, 125, 0.38)' : active ? '#087471' : layout.colors.muted;
-    ctx.font = '850 12px sans-serif';
+    setFont(ctx, layout, '850 12px sans-serif');
     ctx.fillText(tools[index][1], rect.x + rect.width / 2, rect.y + rect.height * 0.74);
     ctx.textAlign = 'left';
     ctx.textBaseline = 'alphabetic';
@@ -964,7 +1015,7 @@ function drawKeypad(ctx, layout) {
           : layout.colors.keyAmber;
     roundRect(ctx, rect.x, rect.y, rect.width, rect.height, 12, color);
     ctx.fillStyle = layout.colors.white;
-    ctx.font = '900 24px sans-serif';
+    setFont(ctx, layout, '900 24px sans-serif');
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(String(rect.digit), rect.x + rect.width / 2, rect.y + rect.height / 2 + 1);
@@ -973,10 +1024,10 @@ function drawKeypad(ctx, layout) {
   });
 }
 
-function drawButton(ctx, x, y, width, height, label, fill, color) {
+function drawButton(ctx, layout, x, y, width, height, label, fill, color) {
   roundRect(ctx, x, y, width, height, 14, fill);
   ctx.fillStyle = color;
-  ctx.font = '800 22px sans-serif';
+  setFont(ctx, layout, '800 22px sans-serif');
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillText(label, x + width / 2, y + height / 2);
@@ -984,10 +1035,10 @@ function drawButton(ctx, x, y, width, height, label, fill, color) {
   ctx.textBaseline = 'alphabetic';
 }
 
-function chip(ctx, x, y, width, height, text, fill, color) {
+function chip(ctx, x, y, width, height, text, fill, color, layout) {
   roundRect(ctx, x, y, width, height, 8, fill);
   ctx.fillStyle = color;
-  ctx.font = '900 10px sans-serif';
+  setFont(ctx, layout, '900 10px sans-serif');
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillText(text, x + width / 2, y + height / 2 + 1);

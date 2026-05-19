@@ -4,7 +4,7 @@ const DERUST_COPY = {
   completionLabel: 'LAB RESULT',
   completionTitle: '大脑除锈完成',
   metricLabel: '今日脑力光泽度',
-  subtitle: '你的前额叶刚刚完成了一次俯卧撑。请继续保持嚣张。',
+  subtitle: '你的脑力刚刚完成了一次轻量热身。请继续保持嚣张。',
   summaryLabel: '今日报告',
   todayStatLabel: '今日训练',
   activationStatLabel: '大脑状态',

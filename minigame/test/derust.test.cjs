@@ -279,12 +279,13 @@ test('derust copy avoids disease or medical claim wording', () => {
     dailySummary.disclaimer,
   ].join(' ');
 
-  assert.equal(/老年痴呆|阿尔茨海默|预防|降低.*风险|医学证明|患病概率/.test(copy), false);
+  assert.equal(/前额叶|老年痴呆|阿尔茨海默|预防|降低.*风险|医学证明|患病概率/.test(copy), false);
 });
 
 test('createCompletionFeedback adapts completion copy for long sessions', () => {
+  const hardLevel = levels.find((level) => level.difficulty === 'hard');
   const state = {
-    ...createPuzzleState(levels[9]),
+    ...createPuzzleState(hardLevel),
     completed: true,
   };
 
@@ -346,8 +347,9 @@ test('unknown difficulty completion copy falls back to standard long-session lan
 });
 
 test('long-session completion copy avoids speed pressure and medical claims', () => {
+  const hardLevel = levels.find((level) => level.difficulty === 'hard');
   const state = {
-    ...createPuzzleState(levels[9]),
+    ...createPuzzleState(hardLevel),
     completed: true,
   };
   const feedback = createCompletionFeedback(state, [], null, '2026-05-14', 22 * 60 * 1000);

@@ -118,7 +118,10 @@ function setupCanvas() {
   canvas.height = height * dpr;
 
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  layout = createLayout(width, height, { debugToolsEnabled, topInset: gameplayTopInset });
+  layout = {
+    ...createLayout(width, height, { debugToolsEnabled, topInset: gameplayTopInset }),
+    canvasTextScale: 1,
+  };
   refreshMenuLayout();
   refreshPracticeMenuLayout();
 }
@@ -131,14 +134,17 @@ function refreshMenuLayout() {
   const activeRun = getResumeableRun(savedProgress && savedProgress.activeRun);
   const practiceRun = getResumeableRun(savedProgress && savedProgress.practiceRun);
 
-  menuLayout = createMenuLayout(layout.width, layout.height, levels, {
-    hasActiveRun: Boolean(activeRun),
-    activeRun,
-    hasPracticeRun: Boolean(practiceRun),
-    practiceRun,
-    completedLevelIds,
-    topInset,
-  });
+  menuLayout = {
+    ...createMenuLayout(layout.width, layout.height, levels, {
+      hasActiveRun: Boolean(activeRun),
+      activeRun,
+      hasPracticeRun: Boolean(practiceRun),
+      practiceRun,
+      completedLevelIds,
+      topInset,
+    }),
+    canvasTextScale: layout.canvasTextScale,
+  };
 }
 
 function getResumeableRun(run) {
@@ -150,7 +156,10 @@ function refreshPracticeMenuLayout() {
     return;
   }
 
-  practiceMenuLayout = createPracticeMenuLayout(layout.width, layout.height, levels, { topInset });
+  practiceMenuLayout = {
+    ...createPracticeMenuLayout(layout.width, layout.height, levels, { topInset }),
+    canvasTextScale: layout.canvasTextScale,
+  };
 }
 
 function render() {

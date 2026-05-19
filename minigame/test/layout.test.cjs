@@ -175,6 +175,15 @@ test('hitTest maps top-right practice switch button to difficulty action', () =>
   });
 });
 
+test('layout keeps the practice difficulty switch away from the WeChat capsule area', () => {
+  const layout = createLayout(430, 932, { topInset: 96 });
+  const button = layout.modeSwitchButton;
+
+  assert.ok(button.x < 430 / 2);
+  assert.ok(button.y >= layout.backButton.y + layout.backButton.height + 4);
+  assert.ok(layout.ruleStrip.y >= button.y + button.height + 6);
+});
+
 test('hitTest maps top-left puzzle button to back action when completed', () => {
   const layout = createLayout(430, 932);
   const backButton = layout.backButton;
