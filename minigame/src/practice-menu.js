@@ -1,4 +1,4 @@
-const { DIFFICULTY_OPTIONS } = require('./game-modes');
+const { TRAINING_OPTIONS, getTrainingOption } = require('./game-modes');
 
 const PRACTICE_AMBIENT_PARTICLES = Object.freeze([
   { xRatio: 0.18, yRatio: 0.22, radius: 34, color: 'rgba(22, 163, 160, 0.15)' },
@@ -21,10 +21,16 @@ function createPracticeMenuLayout(width, height, levels, options = {}) {
   const cardGap = compact ? 10 : 14;
   const cardStartY = titleY + (compact ? 58 : 88);
   const availableCardHeight =
-    (height - margin - cardStartY - cardGap * (DIFFICULTY_OPTIONS.length - 1)) /
-    DIFFICULTY_OPTIONS.length;
+    (height - margin - cardStartY - cardGap * (TRAINING_OPTIONS.length - 1)) /
+    TRAINING_OPTIONS.length;
   const cardHeight = Math.max(70, Math.min(compact ? 86 : 108, availableCardHeight));
-  const availableDifficulties = getAvailableDifficulties(levels);
+  const availableSourceDifficulties = getAvailableSourceDifficulties(levels);
+  const recommendedTrainingDifficulty =
+    getTrainingOption(options.recommendedTrainingDifficulty)
+      ? options.recommendedTrainingDifficulty
+      : 'warmup';
+  const recommendedOption = getTrainingOption(recommendedTrainingDifficulty);
+  const recommendation = recommendedOption ? `推荐：${recommendedOption.label}` : '';
 
   return {
     width,
@@ -48,19 +54,24 @@ function createPracticeMenuLayout(width, height, levels, options = {}) {
       radius: particle.radius,
       color: particle.color,
     })),
-    difficultyCards: DIFFICULTY_OPTIONS.map((option, index) => {
-      const enabled = availableDifficulties.has(option.difficulty);
+    difficultyCards: TRAINING_OPTIONS.map((option, index) => {
+      const enabled = availableSourceDifficulties.has(option.sourceDifficulty);
+      const recommended = option.trainingDifficulty === recommendedTrainingDifficulty;
 
       return {
         x: margin,
         y: cardStartY + index * (cardHeight + cardGap),
         width: width - margin * 2,
         height: cardHeight,
-        difficulty: option.difficulty,
+        difficulty: option.sourceDifficulty,
+        trainingDifficulty: option.trainingDifficulty,
+        sourceDifficulty: option.sourceDifficulty,
         label: option.label,
         description: option.description,
+        recommendation,
+        recommendationText: option.recommendationText,
         enabled,
-        statusLabel: enabled ? '可练习' : '暂未开放',
+        statusLabel: enabled ? (recommended ? '推荐' : '可练习') : '暂未开放',
       };
     }),
   };
@@ -89,16 +100,19 @@ function hitTestPracticeMenu(layout, x, y) {
     type: 'practiceMenu',
     action: 'difficulty',
     difficulty: card.difficulty,
+    trainingDifficulty: card.trainingDifficulty,
   };
 }
 
-function getAvailableDifficulties(levels) {
+function getAvailableSourceDifficulties(levels) {
   const safeLevels = Array.isArray(levels) ? levels : [];
 
   return new Set(
     safeLevels
       .map((level) => level && level.difficulty)
-      .filter((difficulty) => DIFFICULTY_OPTIONS.some((option) => option.difficulty === difficulty)),
+      .filter((difficulty) =>
+        TRAINING_OPTIONS.some((option) => option.sourceDifficulty === difficulty),
+      ),
   );
 }
 

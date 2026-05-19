@@ -82,11 +82,14 @@ function createProgressFromRuns({
   };
 }
 
-function serializeState(state, mode = 'campaign') {
+function serializeState(state, mode = 'campaign', options = {}) {
   return {
     mode,
     levelId: state.level.id,
     difficulty: state.level.difficulty,
+    ...(typeof options.trainingDifficulty === 'string'
+      ? { trainingDifficulty: options.trainingDifficulty }
+      : {}),
     selected: { ...state.selected },
     noteMode: state.noteMode,
     mistakes: state.mistakes,
@@ -153,6 +156,9 @@ function normalizeActiveRun(activeRun, fallbackMode = 'campaign') {
     ...activeRun,
     mode: activeRun.mode === 'practice' ? 'practice' : fallbackMode,
     difficulty: typeof activeRun.difficulty === 'string' ? activeRun.difficulty : null,
+    ...(typeof activeRun.trainingDifficulty === 'string'
+      ? { trainingDifficulty: activeRun.trainingDifficulty }
+      : {}),
     selected: { ...activeRun.selected },
     cells: activeRun.cells.map((row) =>
       row.map((cell) => ({

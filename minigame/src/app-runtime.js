@@ -12,9 +12,11 @@ const { levels, getLevelById } = require('./levels');
 const { createMenuLayout, hitTestMenu } = require('./menu');
 const { createPracticeMenuLayout, hitTestPracticeMenu } = require('./practice-menu');
 const {
+  TRAINING_OPTIONS,
   choosePracticeLevel,
   createEmptyPracticeStats,
-  getDifficultyOption,
+  getRecommendedTrainingDifficulty,
+  getTrainingOption,
   recordPracticeCompletion,
 } = require('./game-modes');
 const {
@@ -44,6 +46,7 @@ const ctx = canvas.getContext('2d');
 
 let scene = 'menu';
 let currentMode = 'campaign';
+let currentTrainingDifficulty = null;
 let state = null;
 let savedProgress = null;
 let completedLevelIds = [];
@@ -159,7 +162,10 @@ function refreshPracticeMenuLayout() {
   }
 
   practiceMenuLayout = {
-    ...createPracticeMenuLayout(layout.width, layout.height, levels, { topInset }),
+    ...createPracticeMenuLayout(layout.width, layout.height, levels, {
+      topInset,
+      recommendedTrainingDifficulty: getRecommendedPracticeTrainingDifficulty(),
+    }),
     canvasTextScale: layout.canvasTextScale,
   };
 }
@@ -225,7 +231,9 @@ function createModeContext() {
     return { mode: 'campaign' };
   }
 
-  const option = getDifficultyOption(state.level.difficulty);
+  const option =
+    getTrainingOption(currentTrainingDifficulty) ||
+    getTrainingOptionBySourceDifficulty(state.level.difficulty);
 
   return {
     mode: 'practice',
@@ -237,8 +245,8 @@ function createModeContext() {
 function createVictoryActions() {
   if (currentMode === 'practice') {
     return {
-      restart: '再练一局',
-      next: '换个难度',
+      restart: '换难度',
+      next: '下一局',
     };
   }
 
@@ -286,6 +294,7 @@ function startOrContinueCampaign() {
 
   if (restored) {
     currentMode = 'campaign';
+    currentTrainingDifficulty = null;
     state = restored;
     scene = 'playing';
     resetCompanionSession(state.level);
@@ -305,6 +314,9 @@ function startOrContinuePractice() {
 
   if (restored) {
     currentMode = 'practice';
+    currentTrainingDifficulty = getRunTrainingDifficulty(
+      getResumeableRun(savedProgress && savedProgress.practiceRun),
+    );
     state = restored;
     scene = 'playing';
     resetCompanionSession(state.level);
@@ -336,24 +348,30 @@ function handlePracticeMenuTouch(touch) {
   }
 
   if (hit.action === 'difficulty') {
+    const trainingDifficulty = hit.trainingDifficulty || hit.difficulty;
     const level = choosePracticeLevel(
       levels,
-      hit.difficulty,
+      trainingDifficulty,
       savedProgress && savedProgress.practiceStats,
     );
 
     if (level) {
-      startLevel(level, 'practice');
+      startLevel(level, 'practice', { trainingDifficulty });
     }
   }
 }
 
-function startLevel(level, mode = 'campaign') {
+function startLevel(level, mode = 'campaign', options = {}) {
   if (!level) {
     return;
   }
 
   currentMode = mode;
+  currentTrainingDifficulty =
+    mode === 'practice'
+      ? normalizeTrainingDifficulty(options.trainingDifficulty) ||
+        getTrainingDifficultyBySourceDifficulty(level.difficulty)
+      : null;
   state = createPuzzleState(level);
   resetCompanionSession(level);
   persistProgress();
@@ -475,7 +493,11 @@ function recordCompletedLevel() {
       completedLevelIds,
       dailyReport: nextDailyReport,
       growthStats: nextGrowthStats,
-      practiceStats: recordPracticeCompletion(previous.practiceStats, state.level),
+      practiceStats: recordPracticeCompletion(
+        previous.practiceStats,
+        state.level,
+        currentTrainingDifficulty,
+      ),
     };
     return;
   }
@@ -501,7 +523,7 @@ function persistProgress() {
       : getResumeableRun(previous.activeRun);
   const practiceRun =
     currentMode === 'practice' && !state.completed
-      ? createRunFromState(state, 'practice')
+      ? createRunFromState(state, 'practice', { trainingDifficulty: currentTrainingDifficulty })
       : getResumeableRun(previous.practiceRun);
 
   savedProgress = createProgressFromRuns({
@@ -619,6 +641,7 @@ function applyVictoryAction(action) {
 function applyCampaignVictoryAction(action) {
   if (action === 'next') {
     playSound('tool');
+    currentTrainingDifficulty = null;
     state = nextLevel(state);
     resetCompanionSession(state.level);
     persistProgress();
@@ -628,22 +651,59 @@ function applyCampaignVictoryAction(action) {
 function applyPracticeVictoryAction(action) {
   if (action === 'restart') {
     playSound('tool');
-    const level = choosePracticeLevel(
-      levels,
-      state.level.difficulty,
-      savedProgress && savedProgress.practiceStats,
-    );
-    state = createPuzzleState(level || state.level);
-    resetCompanionSession(state.level);
-    persistProgress();
+    scene = 'practiceDifficulty';
+    refreshPracticeMenuLayout();
     return;
   }
 
   if (action === 'next') {
     playSound('tool');
+    const trainingDifficulty = getRecommendedPracticeTrainingDifficulty();
+    const level = choosePracticeLevel(
+      levels,
+      trainingDifficulty,
+      savedProgress && savedProgress.practiceStats,
+    );
+
+    if (level) {
+      startLevel(level, 'practice', { trainingDifficulty });
+      return;
+    }
+
     scene = 'practiceDifficulty';
     refreshPracticeMenuLayout();
   }
+}
+
+function getRecommendedPracticeTrainingDifficulty() {
+  return getRecommendedTrainingDifficulty({
+    completedLevelIds,
+    practiceStats: savedProgress && savedProgress.practiceStats,
+  });
+}
+
+function getRunTrainingDifficulty(run) {
+  if (!run) {
+    return null;
+  }
+
+  return (
+    normalizeTrainingDifficulty(run.trainingDifficulty) ||
+    getTrainingDifficultyBySourceDifficulty(run.difficulty)
+  );
+}
+
+function normalizeTrainingDifficulty(trainingDifficulty) {
+  return getTrainingOption(trainingDifficulty) ? trainingDifficulty : null;
+}
+
+function getTrainingOptionBySourceDifficulty(difficulty) {
+  return TRAINING_OPTIONS.find((option) => option.sourceDifficulty === difficulty) || null;
+}
+
+function getTrainingDifficultyBySourceDifficulty(difficulty) {
+  const option = getTrainingOptionBySourceDifficulty(difficulty);
+  return option ? option.trainingDifficulty : null;
 }
 
 function startMenuAnimation() {

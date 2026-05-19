@@ -64,7 +64,7 @@ test('app runtime starts campaign gameplay from the home screen and persists the
   }
 });
 
-test('app runtime opens practice difficulty and starts hard practice gameplay', () => {
+test('app runtime opens practice difficulty with a recommended training card and starts advanced gameplay', () => {
   const runtime = bootAppRuntime();
 
   try {
@@ -72,15 +72,56 @@ test('app runtime opens practice difficulty and starts hard practice gameplay', 
 
     assert.ok(runtime.latestPracticeMenuCall());
     assert.match(runtime.drawnText(), /自由练习/);
+    assert.match(runtime.drawnText(), /推荐：热身/);
 
-    tapPracticeDifficulty(runtime, 'hard');
+    tapPracticeTrainingDifficulty(runtime, 'advanced');
 
     const game = runtime.latestGameCall();
     const latestSave = runtime.latestSave();
 
     assert.equal(game.state.level.difficulty, 'hard');
+    assert.equal(game.options.modeContext.title, '自由练习 · 进阶');
     assert.equal(latestSave.practiceRun.mode, 'practice');
     assert.equal(latestSave.practiceRun.difficulty, 'hard');
+    assert.equal(latestSave.practiceRun.trainingDifficulty, 'advanced');
+  } finally {
+    runtime.restore();
+  }
+});
+
+test('app runtime starts the recommended training source difficulty', () => {
+  const runtime = bootAppRuntime({
+    initialProgress: {
+      version: 1,
+      activeRun: null,
+      practiceRun: null,
+      completedLevelIds: Array.from({ length: 10 }, (_, index) => `lab-${index + 1}`),
+      practiceStats: {
+        totalCompleted: 0,
+        lastDifficulty: null,
+        recentLevelIdsByDifficulty: {
+          intro: null,
+          easy: null,
+          normal: null,
+          hard: null,
+        },
+      },
+    },
+  });
+
+  try {
+    tapMenuMode(runtime, 'practice');
+
+    const recommended = runtime
+      .latestPracticeMenuCall()
+      .layout.difficultyCards.find((card) => card.statusLabel === '推荐');
+    assert.equal(recommended.trainingDifficulty, 'standard');
+
+    runtime.touch(recommended.x + recommended.width / 2, recommended.y + recommended.height / 2);
+
+    const game = runtime.latestGameCall();
+    assert.equal(game.state.level.difficulty, 'normal');
+    assert.equal(runtime.latestSave().practiceRun.trainingDifficulty, 'standard');
   } finally {
     runtime.restore();
   }
@@ -102,7 +143,7 @@ test('app runtime records growth stats for campaign and practice completions', (
 
     tapBack(runtime);
     tapMenuMode(runtime, 'practice');
-    tapPracticeDifficulty(runtime, 'hard');
+    tapPracticeTrainingDifficulty(runtime, 'advanced');
     completeCurrentLevel(runtime);
 
     const practiceSave = runtime.latestSave();
@@ -111,6 +152,32 @@ test('app runtime records growth stats for campaign and practice completions', (
     assert.equal(practiceSave.growthStats.campaignCompletedCount, 1);
     assert.equal(practiceSave.growthStats.practiceCompletedCount, 1);
     assert.deepEqual(practiceSave.completedLevelIds, ['lab-01']);
+  } finally {
+    runtime.restore();
+  }
+});
+
+test('app runtime practice victory next uses recommended difficulty and restart returns to difficulty page', () => {
+  const runtime = bootAppRuntime();
+
+  try {
+    tapMenuMode(runtime, 'practice');
+    tapPracticeTrainingDifficulty(runtime, 'steady');
+    completeCurrentLevel(runtime);
+
+    assert.equal(runtime.latestGameCall().options.victoryActions.next, '下一局');
+    assert.equal(runtime.latestGameCall().options.victoryActions.restart, '换难度');
+
+    tapVictoryAction(runtime, 'next');
+
+    assert.equal(runtime.latestGameCall().state.level.difficulty, 'easy');
+    assert.equal(runtime.latestSave().practiceRun.trainingDifficulty, 'steady');
+
+    completeCurrentLevel(runtime);
+    tapVictoryAction(runtime, 'restart');
+
+    assert.ok(runtime.latestPracticeMenuCall());
+    assert.match(runtime.drawnText(), /推荐：标准/);
   } finally {
     runtime.restore();
   }
@@ -176,7 +243,7 @@ function bootAppRuntime(options = {}) {
     onWindowResize() {},
     showModal() {},
     getStorageSync() {
-      return null;
+      return options.initialProgress || null;
     },
     setStorageSync(key, value) {
       savedWrites.push({ key, value });
@@ -268,11 +335,18 @@ function tapMenuMode(runtime, mode) {
   runtime.touch(card.x + card.width / 2, card.y + card.height / 2);
 }
 
-function tapPracticeDifficulty(runtime, difficulty) {
+function tapPracticeTrainingDifficulty(runtime, trainingDifficulty) {
   const call = runtime.latestPracticeMenuCall();
-  const card = call.layout.difficultyCards.find((item) => item.difficulty === difficulty);
+  const card = call.layout.difficultyCards.find((item) => item.trainingDifficulty === trainingDifficulty);
   assert.ok(card);
   runtime.touch(card.x + card.width / 2, card.y + card.height / 2);
+}
+
+function tapVictoryAction(runtime, action) {
+  const call = runtime.latestGameCall();
+  const button = call.layout.victory[action];
+  assert.ok(button);
+  runtime.touch(button.x + button.width / 2, button.y + button.height / 2);
 }
 
 function tapBack(runtime) {

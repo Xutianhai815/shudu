@@ -53,13 +53,13 @@ test('renderer uses free training mode context in the top bar', () => {
     modeContext: {
       mode: 'practice',
       label: '自由练习',
-      title: '自由练习 · 入门',
+      title: '自由练习 · 热身',
     },
   });
 
   const text = getDrawnText(ctx);
   assert.match(text, /自由练习/);
-  assert.match(text, /自由练习 · 入门/);
+  assert.match(text, /自由练习 · 热身/);
   assert.match(text, /换难度/);
   assert.equal(text.includes(levels[0].label), false);
   assert.equal(text.includes(levels[0].title), false);
@@ -87,17 +87,17 @@ test('renderer uses practice victory action copy when provided', () => {
     modeContext: {
       mode: 'practice',
       label: '自由练习',
-      title: '自由练习 · 入门',
+      title: '自由练习 · 热身',
     },
     victoryActions: {
-      restart: '再练一局',
-      next: '换个难度',
+      restart: '换难度',
+      next: '下一局',
     },
   });
 
   const text = getDrawnText(ctx);
-  assert.match(text, /再练一局/);
-  assert.match(text, /换个难度/);
+  assert.match(text, /下一局/);
+  assert.match(text, /换难度/);
   assert.equal(text.includes('回首页'), false);
   assert.equal(text.includes('再试一次'), false);
   assert.equal(text.includes('下一关'), false);
@@ -180,7 +180,7 @@ test('renderer fills missing second completion stat with a default card', () => 
     modeContext: {
       mode: 'practice',
       label: '自由练习',
-      title: '自由练习 · 入门',
+      title: '自由练习 · 热身',
     },
     completionFeedback: {
       stats: [{ label: '自定义', value: 'OK' }],
@@ -720,7 +720,9 @@ test('renderer handles a menu with no visible level cards', () => {
 
 test('renderer draws the free training difficulty menu copy', () => {
   const ctx = createMockCanvasContext();
-  const layout = createPracticeMenuLayout(430, 932, levels);
+  const layout = createPracticeMenuLayout(430, 932, levels, {
+    recommendedTrainingDifficulty: 'steady',
+  });
 
   renderPracticeMenu(ctx, layout);
 
@@ -728,9 +730,11 @@ test('renderer draws the free training difficulty menu copy', () => {
   assert.match(text, /自由练习/);
   assert.match(text, /选一个难度，随时练一局，不影响闯关进度。/);
   assert.match(text, /返回/);
-  ['入门', '简单', '标准', '挑战'].forEach((label) => {
+  ['热身', '稳定', '标准', '进阶'].forEach((label) => {
     assert.match(text, new RegExp(label));
   });
+  assert.match(text, /推荐：稳定/);
+  assert.match(text, /推荐/);
   assert.match(text, /长局专注，不急着快。/);
   assert.equal(text.includes('undefined'), false);
 });
@@ -743,8 +747,8 @@ test('renderer marks unavailable free training difficulties as closed', () => {
   renderPracticeMenu(ctx, layout);
 
   const text = getDrawnText(ctx);
-  assert.match(text, /入门/);
-  assert.match(text, /可练习/);
+  assert.match(text, /热身/);
+  assert.match(text, /推荐/);
   assert.match(text, /暂未开放/);
 });
 

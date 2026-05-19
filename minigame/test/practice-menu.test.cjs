@@ -5,7 +5,9 @@ const { levels } = require('../src/levels');
 const { createPracticeMenuLayout, hitTestPracticeMenu } = require('../src/practice-menu');
 
 test('createPracticeMenuLayout builds a free training difficulty page on 430x932', () => {
-  const layout = createPracticeMenuLayout(430, 932, levels);
+  const layout = createPracticeMenuLayout(430, 932, levels, {
+    recommendedTrainingDifficulty: 'steady',
+  });
 
   assert.equal(layout.width, 430);
   assert.equal(layout.height, 932);
@@ -13,14 +15,32 @@ test('createPracticeMenuLayout builds a free training difficulty page on 430x932
   assert.equal(layout.subtitle.text, '选一个难度，随时练一局，不影响闯关进度。');
   assert.equal(layout.backButton.label, '返回');
   assert.deepEqual(
-    layout.difficultyCards.map((card) => [card.difficulty, card.label, card.enabled]),
+    layout.difficultyCards.map((card) => [
+      card.trainingDifficulty,
+      card.sourceDifficulty,
+      card.label,
+      card.enabled,
+      card.recommendation,
+      card.statusLabel,
+    ]),
     [
-      ['intro', '入门', true],
-      ['easy', '简单', true],
-      ['normal', '标准', true],
-      ['hard', '挑战', true],
+      ['warmup', 'intro', '热身', true, '推荐：稳定', '可练习'],
+      ['steady', 'easy', '稳定', true, '推荐：稳定', '推荐'],
+      ['standard', 'normal', '标准', true, '推荐：稳定', '可练习'],
+      ['advanced', 'hard', '进阶', true, '推荐：稳定', '可练习'],
     ],
   );
+});
+
+test('createPracticeMenuLayout marks the first-time recommended training card', () => {
+  const layout = createPracticeMenuLayout(430, 932, levels, {
+    recommendedTrainingDifficulty: 'warmup',
+  });
+  const recommended = layout.difficultyCards.find((card) => card.trainingDifficulty === 'warmup');
+
+  assert.equal(recommended.label, '热身');
+  assert.equal(recommended.statusLabel, '推荐');
+  assert.equal(recommended.recommendation, '推荐：热身');
 });
 
 test('createPracticeMenuLayout keeps controls inside a short viewport', () => {
@@ -46,12 +66,12 @@ test('createPracticeMenuLayout disables unavailable difficulties', () => {
   const layout = createPracticeMenuLayout(430, 932, introOnlyLevels);
 
   assert.deepEqual(
-    layout.difficultyCards.map((card) => [card.difficulty, card.enabled, card.statusLabel]),
+    layout.difficultyCards.map((card) => [card.trainingDifficulty, card.sourceDifficulty, card.enabled, card.statusLabel]),
     [
-      ['intro', true, '可练习'],
-      ['easy', false, '暂未开放'],
-      ['normal', false, '暂未开放'],
-      ['hard', false, '暂未开放'],
+      ['warmup', 'intro', true, '推荐'],
+      ['steady', 'easy', false, '暂未开放'],
+      ['standard', 'normal', false, '暂未开放'],
+      ['advanced', 'hard', false, '暂未开放'],
     ],
   );
 });
@@ -59,23 +79,24 @@ test('createPracticeMenuLayout disables unavailable difficulties', () => {
 test('hitTestPracticeMenu maps back and enabled difficulty cards', () => {
   const layout = createPracticeMenuLayout(430, 932, levels);
   const back = layout.backButton;
-  const hard = layout.difficultyCards.find((card) => card.difficulty === 'hard');
+  const advanced = layout.difficultyCards.find((card) => card.trainingDifficulty === 'advanced');
 
   assert.deepEqual(hitTestPracticeMenu(layout, back.x + 2, back.y + 2), {
     type: 'practiceMenu',
     action: 'back',
   });
-  assert.deepEqual(hitTestPracticeMenu(layout, hard.x + hard.width / 2, hard.y + hard.height / 2), {
+  assert.deepEqual(hitTestPracticeMenu(layout, advanced.x + advanced.width / 2, advanced.y + advanced.height / 2), {
     type: 'practiceMenu',
     action: 'difficulty',
     difficulty: 'hard',
+    trainingDifficulty: 'advanced',
   });
 });
 
 test('hitTestPracticeMenu ignores disabled difficulty cards and outside taps', () => {
   const introOnlyLevels = levels.filter((level) => level.difficulty === 'intro');
   const layout = createPracticeMenuLayout(430, 932, introOnlyLevels);
-  const disabled = layout.difficultyCards.find((card) => card.difficulty === 'normal');
+  const disabled = layout.difficultyCards.find((card) => card.trainingDifficulty === 'standard');
 
   assert.equal(
     hitTestPracticeMenu(layout, disabled.x + disabled.width / 2, disabled.y + disabled.height / 2),

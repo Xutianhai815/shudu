@@ -209,8 +209,9 @@ test('runtime enters free training difficulty selection from the home screen', (
 
     assert.ok(runtime.latestPracticeMenuCall());
     assert.match(runtime.drawnText(), /自由练习/);
-    assert.match(runtime.drawnText(), /入门/);
-    assert.match(runtime.drawnText(), /挑战/);
+    assert.match(runtime.drawnText(), /热身/);
+    assert.match(runtime.drawnText(), /进阶/);
+    assert.match(runtime.drawnText(), /推荐：热身/);
   } finally {
     runtime.restore();
   }
@@ -225,7 +226,7 @@ test('runtime starts a hard free training puzzle without writing campaign comple
 
     let game = runtime.latestGameCall();
     assert.equal(game.state.level.difficulty, 'hard');
-    assert.match(runtime.drawnText(), /自由练习 · 挑战/);
+    assert.match(runtime.drawnText(), /自由练习 · 进阶/);
     assert.match(runtime.drawnText(), /换难度/);
 
     completePuzzleWithTouchInput(runtime);
@@ -233,8 +234,8 @@ test('runtime starts a hard free training puzzle without writing campaign comple
 
     const latestSave = runtime.latestSave();
     assert.equal(game.state.completed, true);
-    assert.match(runtime.drawnText(), /再练一局/);
-    assert.match(runtime.drawnText(), /换个难度/);
+    assert.match(runtime.drawnText(), /下一局/);
+    assert.match(runtime.drawnText(), /换难度/);
     assert.equal(runtime.drawnText().includes('回首页'), false);
     assert.equal(latestSave.completedLevelIds.includes(game.state.level.id), false);
     assert.ok(latestSave.dailyReport.completionCount >= 1);
@@ -260,7 +261,7 @@ test('runtime lets free practice players switch difficulty from gameplay', () =>
 
     assert.ok(runtime.latestPracticeMenuCall());
     assert.match(runtime.drawnText(), /自由练习/);
-    assert.match(runtime.drawnText(), /挑战/);
+    assert.match(runtime.drawnText(), /进阶/);
 
     tapPracticeDifficulty(runtime, 'hard');
 

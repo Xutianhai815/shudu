@@ -416,6 +416,12 @@ function drawPracticeDifficultyCards(ctx, layout) {
     setFont(ctx, layout, layout.compact ? '800 11px sans-serif' : '800 13px sans-serif');
     ctx.fillText(card.description, card.x + 32, card.y + (layout.compact ? 51 : 62));
 
+    if (card.recommendation) {
+      ctx.fillStyle = enabled ? 'rgba(8, 116, 113, 0.78)' : 'rgba(24, 33, 31, 0.34)';
+      setFont(ctx, layout, layout.compact ? '850 10px sans-serif' : '850 11px sans-serif');
+      ctx.fillText(card.recommendation, card.x + 32, card.y + card.height - (layout.compact ? 14 : 18));
+    }
+
     drawPracticeStatusPill(ctx, layout, card, card.statusLabel, statusFill, statusColor);
 
     if (enabled) {
