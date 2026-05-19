@@ -5,6 +5,7 @@ const test = require('node:test');
 
 const appRuntimePath = path.join(__dirname, '..', 'src', 'app-runtime.js');
 const rendererPath = path.join(__dirname, '..', 'src', 'renderer.js');
+const { levels } = require('../src/levels');
 
 test('app runtime boots to the mode menu', () => {
   const runtime = bootAppRuntime();
@@ -135,6 +136,10 @@ test('app runtime records growth stats for campaign and practice completions', (
     completeCurrentLevel(runtime);
 
     const campaignSave = runtime.latestSave();
+    assert.deepEqual(runtime.latestGameCall().options.completionFeedback.stats, [
+      { label: '闯关进度', value: `1/${levels.length}` },
+      { label: '连续除锈', value: '1 天' },
+    ]);
     assert.equal(campaignSave.growthStats.currentStreak, 1);
     assert.equal(campaignSave.growthStats.todayCompletedCount, 1);
     assert.equal(campaignSave.growthStats.campaignCompletedCount, 1);
@@ -147,6 +152,11 @@ test('app runtime records growth stats for campaign and practice completions', (
     completeCurrentLevel(runtime);
 
     const practiceSave = runtime.latestSave();
+    assert.deepEqual(runtime.latestGameCall().options.completionFeedback.stats, [
+      { label: '今日训练', value: '2 局' },
+      { label: '连续除锈', value: '1 天' },
+      { label: '当前训练', value: '进阶' },
+    ]);
     assert.equal(practiceSave.growthStats.currentStreak, 1);
     assert.equal(practiceSave.growthStats.todayCompletedCount, 2);
     assert.equal(practiceSave.growthStats.campaignCompletedCount, 1);

@@ -203,9 +203,19 @@ function createCurrentCompletionFeedback() {
     getTodayKey(),
     companionSession ? Date.now() - companionSession.startedAt : 0,
   );
+  const growthStats = savedProgress && savedProgress.growthStats;
+  const streakValue =
+    growthStats && growthStats.currentStreak ? `${growthStats.currentStreak} 天` : '已开始';
 
   if (currentMode !== 'campaign') {
-    return feedback;
+    return {
+      ...feedback,
+      stats: [
+        { label: '今日训练', value: `${(growthStats && growthStats.todayCompletedCount) || 1} 局` },
+        { label: '连续除锈', value: streakValue },
+        { label: '当前训练', value: getCurrentTrainingLabel() },
+      ],
+    };
   }
 
   const levelNumber = getCampaignLevelNumber(state.level);
@@ -218,6 +228,10 @@ function createCurrentCompletionFeedback() {
     subtitle: '大脑已热身，继续挑战下一关。',
     unlockText: '下一关已解锁',
     progressText: `${levelNumber} / ${levels.length}`,
+    stats: [
+      { label: '闯关进度', value: `${levelNumber}/${levels.length}` },
+      { label: '连续除锈', value: streakValue },
+    ],
   };
 }
 
@@ -240,6 +254,14 @@ function createModeContext() {
     label: '自由练习',
     title: `自由练习 · ${option ? option.label : '练习'}`,
   };
+}
+
+function getCurrentTrainingLabel() {
+  const option =
+    getTrainingOption(currentTrainingDifficulty) ||
+    (state && state.level && getTrainingOptionBySourceDifficulty(state.level.difficulty));
+
+  return option ? option.label : '练习';
 }
 
 function createVictoryActions() {

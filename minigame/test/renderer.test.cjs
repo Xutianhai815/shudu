@@ -140,6 +140,36 @@ test('renderer draws simplified campaign victory without dense report copy', () 
   assert.equal(/老年痴呆|阿尔茨海默|预防|降低.*风险|医学证明|患病概率/.test(text), false);
 });
 
+test('renderer draws completion feedback growth stat cards', () => {
+  const ctx = createMockCanvasContext();
+  const state = {
+    ...createPuzzleState(levels[4]),
+    completed: true,
+  };
+  const layout = createLayout(430, 932);
+
+  renderGame(ctx, state, layout, {
+    completionFeedback: {
+      variant: 'campaign',
+      label: 'LAB CLEAR',
+      title: '第 5 关完成',
+      unlockText: '下一关已解锁',
+      progressText: '5 / 24',
+      subtitle: '大脑已热身，继续挑战下一关。',
+      stats: [
+        { label: '闯关进度', value: '5/24' },
+        { label: '连续除锈', value: '3 天' },
+      ],
+    },
+  });
+
+  const text = getDrawnText(ctx);
+  assert.match(text, /闯关进度/);
+  assert.match(text, /5\/24/);
+  assert.match(text, /连续除锈/);
+  assert.match(text, /3 天/);
+});
+
 test('renderer safely merges incomplete completion feedback', () => {
   const ctx = createMockCanvasContext();
   const state = {
@@ -167,7 +197,7 @@ test('renderer safely merges incomplete completion feedback', () => {
   assert.equal(text.includes('undefined'), false);
 });
 
-test('renderer fills missing second completion stat with a default card', () => {
+test('renderer uses provided non-empty completion stats without adding fallback cards', () => {
   const ctx = createMockCanvasContext();
   const state = {
     ...createPuzzleState(levels[0]),
@@ -190,8 +220,8 @@ test('renderer fills missing second completion stat with a default card', () => 
   const text = getDrawnText(ctx);
   assert.match(text, /自定义/);
   assert.match(text, /OK/);
-  assert.match(text, /大脑状态/);
-  assert.match(text, /已激活/);
+  assert.equal(text.includes('大脑状态'), false);
+  assert.equal(text.includes('已激活'), false);
   assert.equal(/错误数|mistakes/i.test(text), false);
 });
 

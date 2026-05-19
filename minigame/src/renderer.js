@@ -722,15 +722,17 @@ function drawCampaignVictoryContent(ctx, layout, feedback) {
   setFont(ctx, layout, '950 26px sans-serif');
   ctx.fillText(feedback.title, x + panel.width / 2, y + 74);
 
-  drawCampaignUnlockBadge(ctx, x + panel.width / 2, y + 140);
+  drawCampaignUnlockBadge(ctx, x + panel.width / 2, y + 126);
 
   ctx.fillStyle = '#ffc861';
   setFont(ctx, layout, '900 17px sans-serif');
-  ctx.fillText(feedback.unlockText, x + panel.width / 2, y + 214);
+  ctx.fillText(feedback.unlockText, x + panel.width / 2, y + 190);
 
   ctx.fillStyle = 'rgba(246, 255, 244, 0.68)';
   setFont(ctx, layout, '850 12px sans-serif');
-  ctx.fillText(feedback.progressText, x + panel.width / 2, y + 238);
+  ctx.fillText(feedback.progressText, x + panel.width / 2, y + 208);
+
+  drawVictoryStats(ctx, layout, x + 22, y + 220, panel.width - 44, feedback.stats, layout.colors);
 
   ctx.fillStyle = 'rgba(246, 255, 244, 0.9)';
   setFont(ctx, layout, '850 13px sans-serif');
@@ -808,7 +810,7 @@ function drawPracticeVictoryContent(ctx, layout, feedback, colors) {
   setFont(ctx, layout, '850 12px sans-serif');
   ctx.fillText(feedback.metricLabel, x + panel.width / 2, y + 146);
 
-  drawVictoryDerustStats(ctx, layout, x + 22, y + 164, panel.width - 44, feedback.stats, colors);
+  drawVictoryStats(ctx, layout, x + 22, y + 164, panel.width - 44, feedback.stats, colors);
 
   ctx.fillStyle = 'rgba(246, 255, 244, 0.9)';
   setFont(ctx, layout, '850 13px sans-serif');
@@ -836,10 +838,7 @@ function drawPracticeVictoryContent(ctx, layout, feedback, colors) {
 function createDefaultCompletionFeedback(state) {
   return {
     ...DEFAULT_COMPLETION_FEEDBACK,
-    stats: [
-      { ...DEFAULT_COMPLETION_FEEDBACK.stats[0] },
-      { ...DEFAULT_COMPLETION_FEEDBACK.stats[1] },
-    ],
+    stats: DEFAULT_COMPLETION_FEEDBACK.stats.map((stat) => ({ ...stat })),
   };
 }
 
@@ -859,8 +858,18 @@ function normalizeCompletionFeedback(feedback, state) {
     metricLabel: toDisplayText(source.metricLabel, defaults.metricLabel),
     subtitle: toDisplayText(source.subtitle, defaults.subtitle),
     disclaimer: toDisplayText(source.disclaimer, defaults.disclaimer),
-    stats: defaults.stats.map((defaultStat, index) => normalizeCompletionStat(sourceStats[index], defaultStat)),
+    stats: normalizeCompletionStats(sourceStats, defaults.stats),
   };
+}
+
+function normalizeCompletionStats(sourceStats, defaultStats) {
+  if (!sourceStats.length) {
+    return defaultStats.map((stat) => ({ ...stat }));
+  }
+
+  return sourceStats
+    .slice(0, 3)
+    .map((stat, index) => normalizeCompletionStat(stat, defaultStats[index] || defaultStats[defaultStats.length - 1]));
 }
 
 function normalizeCompletionStat(stat, defaultStat) {
@@ -898,10 +907,10 @@ function normalizeVictoryActions(victoryActions) {
   };
 }
 
-function drawVictoryDerustStats(ctx, layout, x, y, width, stats, colors) {
-  const gap = 10;
-  const statWidth = (width - gap) / 2;
-  const safeStats = Array.isArray(stats) ? stats.slice(0, 2) : createDefaultCompletionFeedback({}).stats;
+function drawVictoryStats(ctx, layout, x, y, width, stats, colors) {
+  const safeStats = Array.isArray(stats) && stats.length ? stats.slice(0, 3) : createDefaultCompletionFeedback({}).stats;
+  const gap = safeStats.length >= 3 ? 8 : 10;
+  const statWidth = (width - gap * (safeStats.length - 1)) / safeStats.length;
 
   safeStats.forEach((stat, index) => {
     drawVictoryStat(ctx, layout, x + index * (statWidth + gap), y, statWidth, stat, colors);
@@ -911,13 +920,13 @@ function drawVictoryDerustStats(ctx, layout, x, y, width, stats, colors) {
 function drawVictoryStat(ctx, layout, x, y, width, stat, colors) {
   roundRect(ctx, x, y, width, 48, 12, 'rgba(246, 255, 244, 0.12)');
   ctx.fillStyle = 'rgba(246, 255, 244, 0.62)';
-  setFont(ctx, layout, '800 10px sans-serif');
+  setFont(ctx, layout, width < 86 ? '800 9px sans-serif' : '800 10px sans-serif');
   ctx.textAlign = 'left';
   ctx.textBaseline = 'alphabetic';
-  ctx.fillText(stat.label, x + 12, y + 18);
+  ctx.fillText(stat.label, x + 10, y + 18);
   ctx.fillStyle = '#ffc861';
-  setFont(ctx, layout, '950 18px sans-serif');
-  ctx.fillText(stat.value, x + 12, y + 38);
+  setFont(ctx, layout, width < 86 ? '900 15px sans-serif' : '950 18px sans-serif');
+  ctx.fillText(stat.value, x + 10, y + 38);
 }
 
 function wrapText(ctx, text, x, y, maxWidth, lineHeight) {
