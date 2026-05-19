@@ -101,6 +101,7 @@ test('level pack reduces clue counts across difficulty bands', () => {
   assert.ok(bandAverages[0] > bandAverages[1]);
   assert.ok(bandAverages[1] > bandAverages[2]);
   assert.ok(bandAverages[2] > bandAverages[3]);
+  assert.ok(Math.max(...clueCounts.slice(18, 24)) < Math.min(...clueCounts.slice(10, 18)));
 });
 
 test('each level has a valid unique solution and distinct solved board', () => {
