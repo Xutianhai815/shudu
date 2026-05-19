@@ -174,7 +174,7 @@ test('restartLevel resets the current level and clears progress', () => {
 
 test('retrySameDifficultyLevel switches to another puzzle in the same difficulty band', () => {
   const retried = retrySameDifficultyLevel(createPuzzleState(levels[0]));
-  const wrapped = retrySameDifficultyLevel(createPuzzleState(levels[2]));
+  const wrapped = retrySameDifficultyLevel(createPuzzleState(levels[3]));
 
   assert.equal(retried.level.id, 'lab-02');
   assert.equal(retried.level.difficulty, 'intro');

@@ -352,17 +352,19 @@ test('normalizeProgress normalizes active run cell values and notes', () => {
 });
 
 test('createRunFromState serializes mode and difficulty for reusable runs', () => {
-  const state = createPuzzleState(levels[9]);
+  const hardLevel = levels.find((level) => level.difficulty === 'hard');
+  const state = createPuzzleState(hardLevel);
   const run = createRunFromState(state, 'practice');
 
   assert.equal(run.mode, 'practice');
-  assert.equal(run.levelId, 'lab-10');
+  assert.equal(run.levelId, hardLevel.id);
   assert.equal(run.difficulty, 'hard');
 });
 
 test('createProgressFromRuns saves campaign and practice runs without state-mode ambiguity', () => {
   const activeRun = createRunFromState(createPuzzleState(levels[0]), 'campaign');
-  const practiceRun = createRunFromState(createPuzzleState(levels[9]), 'practice');
+  const hardLevel = levels.find((level) => level.difficulty === 'hard');
+  const practiceRun = createRunFromState(createPuzzleState(hardLevel), 'practice');
   const progress = createProgressFromRuns({
     activeRun,
     practiceRun,
@@ -379,7 +381,7 @@ test('createProgressFromRuns saves campaign and practice runs without state-mode
         intro: null,
         easy: null,
         normal: null,
-        hard: 'lab-10',
+        hard: hardLevel.id,
       },
     },
     growthStats: {
@@ -397,7 +399,7 @@ test('createProgressFromRuns saves campaign and practice runs without state-mode
   assert.equal(progress.activeRun.mode, 'campaign');
   assert.equal(progress.practiceRun.mode, 'practice');
   assert.equal(progress.activeRun.levelId, 'lab-01');
-  assert.equal(progress.practiceRun.levelId, 'lab-10');
+  assert.equal(progress.practiceRun.levelId, hardLevel.id);
   assert.deepEqual(progress.completedLevelIds, ['lab-01', 'lab-02']);
   assert.deepEqual(progress.dailyReport.completedLevelIds, ['lab-01']);
   assert.equal(progress.practiceStats.totalCompleted, 4);
@@ -406,7 +408,8 @@ test('createProgressFromRuns saves campaign and practice runs without state-mode
 
 test('normalizeProgress keeps campaign and practice runs isolated', () => {
   const campaign = createProgressFromState(createPuzzleState(levels[0]), ['lab-01']);
-  const practiceState = createPuzzleState(levels[9]);
+  const hardLevel = levels.find((level) => level.difficulty === 'hard');
+  const practiceState = createPuzzleState(hardLevel);
   const progress = normalizeProgress({
     ...campaign,
     practiceRun: {
@@ -422,14 +425,14 @@ test('normalizeProgress keeps campaign and practice runs isolated', () => {
         intro: 'lab-01',
         easy: null,
         normal: null,
-        hard: 'lab-10',
+        hard: hardLevel.id,
       },
     },
   });
 
   assert.equal(progress.activeRun.mode, 'campaign');
   assert.equal(progress.practiceRun.mode, 'practice');
-  assert.equal(progress.practiceRun.levelId, 'lab-10');
+  assert.equal(progress.practiceRun.levelId, hardLevel.id);
   assert.deepEqual(progress.completedLevelIds, ['lab-01']);
   assert.equal(progress.practiceStats.totalCompleted, 2);
 });

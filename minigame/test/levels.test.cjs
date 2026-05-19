@@ -7,7 +7,7 @@ const { createPuzzleState, solution } = require('../src/puzzle');
 test('level data exposes basic sudoku givens solution and notes', () => {
   const level = getLevelById('lab-01');
 
-  assert.equal(levels.length, 12);
+  assert.equal(levels.length, 24);
   assert.equal(level.id, 'lab-01');
   assert.equal(level.title, '起步热身');
   assert.equal(level.label, 'LAB-01');
@@ -30,18 +30,10 @@ test('createPuzzleState loads its board and clue metadata from a level', () => {
 
 test('level pack progresses through expected ids titles and difficulty bands', () => {
   assert.deepEqual(levels.map((level) => level.id), [
-    'lab-01',
-    'lab-02',
-    'lab-03',
-    'lab-04',
-    'lab-05',
-    'lab-06',
-    'lab-07',
-    'lab-08',
-    'lab-09',
-    'lab-10',
-    'lab-11',
-    'lab-12',
+    ...Array.from({ length: 24 }, (_, index) => `lab-${String(index + 1).padStart(2, '0')}`),
+  ]);
+  assert.deepEqual(levels.map((level) => level.label), [
+    ...Array.from({ length: 24 }, (_, index) => `LAB-${String(index + 1).padStart(2, '0')}`),
   ]);
   assert.deepEqual(levels.map((level) => level.title), [
     '起步热身',
@@ -56,17 +48,41 @@ test('level pack progresses through expected ids titles and difficulty bands', (
     '深度排除',
     '专注挑战',
     '首轮毕业',
+    '宫位接力',
+    '斜线排查',
+    '候选压缩',
+    '链路追踪',
+    '节奏校准',
+    '整盘统筹',
+    '少线突破',
+    '双宫锁定',
+    '高阶排除',
+    '极限专注',
+    '终盘试炼',
+    '大师复盘',
   ]);
   assert.deepEqual(levels.map((level) => level.difficulty), [
     'intro',
     'intro',
     'intro',
+    'intro',
+    'easy',
+    'easy',
+    'easy',
     'easy',
     'easy',
     'easy',
     'normal',
     'normal',
     'normal',
+    'normal',
+    'normal',
+    'normal',
+    'normal',
+    'normal',
+    'hard',
+    'hard',
+    'hard',
     'hard',
     'hard',
     'hard',
@@ -76,10 +92,10 @@ test('level pack progresses through expected ids titles and difficulty bands', (
 test('level pack reduces clue counts across difficulty bands', () => {
   const clueCounts = levels.map(countGivens);
   const bandAverages = [
-    average(clueCounts.slice(0, 3)),
-    average(clueCounts.slice(3, 6)),
-    average(clueCounts.slice(6, 9)),
-    average(clueCounts.slice(9, 12)),
+    average(clueCounts.slice(0, 4)),
+    average(clueCounts.slice(4, 10)),
+    average(clueCounts.slice(10, 18)),
+    average(clueCounts.slice(18, 24)),
   ];
 
   assert.ok(bandAverages[0] > bandAverages[1]);

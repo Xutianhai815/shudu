@@ -93,14 +93,16 @@ test('normalizePracticeStats keeps safe defaults and known difficulty ids only',
 });
 
 test('recordPracticeCompletion increments stats and remembers the completed level', () => {
-  assert.deepEqual(recordPracticeCompletion(createEmptyPracticeStats(), levels[9]), {
+  const hardLevel = levels.find((level) => level.difficulty === 'hard');
+
+  assert.deepEqual(recordPracticeCompletion(createEmptyPracticeStats(), hardLevel), {
     totalCompleted: 1,
     lastDifficulty: 'hard',
     recentLevelIdsByDifficulty: {
       intro: null,
       easy: null,
       normal: null,
-      hard: 'lab-10',
+      hard: hardLevel.id,
     },
   });
 });

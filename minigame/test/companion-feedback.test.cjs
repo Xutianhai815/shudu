@@ -28,8 +28,9 @@ test('registerCompanionAction creates tiered milestone toasts for every difficul
 });
 
 test('registerCompanionAction caps to five toasts and does not repeat the same key', () => {
-  let session = createCompanionSession(levels[9], 0);
-  const state = withFilledMutableCells(createPuzzleState(levels[9]), 60);
+  const hardLevel = levelByDifficulty('hard');
+  let session = createCompanionSession(hardLevel, 0);
+  const state = withFilledMutableCells(createPuzzleState(hardLevel), 60);
 
   [1000, 2000, 3000, 180000, 420000, 720000, 1200000, 1500000].forEach((now) => {
     session = registerCompanionAction(session, state, 'digit', now);
@@ -129,8 +130,9 @@ test('draft return toast waits until player leaves note mode and inputs a formal
 });
 
 test('registerCompanionAction coalesces adjacent milestones within ten seconds', () => {
-  let session = createCompanionSession(levels[9], 0);
-  const state = withFilledMutableCells(createPuzzleState(levels[9]), 60);
+  const hardLevel = levelByDifficulty('hard');
+  let session = createCompanionSession(hardLevel, 0);
+  const state = withFilledMutableCells(createPuzzleState(hardLevel), 60);
 
   session = registerCompanionAction(session, state, 'digit', 1000);
   session = registerCompanionAction(session, state, 'digit', 5000);
@@ -144,8 +146,9 @@ test('registerCompanionAction coalesces adjacent milestones within ten seconds',
 });
 
 test('companion copy avoids process judgment and medical claim wording', () => {
-  let session = createCompanionSession(levels[9], 0);
-  const state = withFilledMutableCells(createPuzzleState(levels[9]), 60);
+  const hardLevel = levelByDifficulty('hard');
+  let session = createCompanionSession(hardLevel, 0);
+  const state = withFilledMutableCells(createPuzzleState(hardLevel), 60);
 
   [1000, 180000, 420000, 720000, 1200000].forEach((now) => {
     session = registerCompanionAction(session, state, 'digit', now);
