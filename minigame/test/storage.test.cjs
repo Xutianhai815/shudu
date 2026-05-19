@@ -40,6 +40,7 @@ test('loadProgress normalizes stored progress object', () => {
       completedLevelIds: [],
     },
     practiceStats: EMPTY_PROGRESS.practiceStats,
+    growthStats: EMPTY_PROGRESS.growthStats,
   });
 });
 
@@ -86,6 +87,7 @@ test('saveProgress writes with the expected storage key', () => {
           completedLevelIds: [],
         },
         practiceStats: EMPTY_PROGRESS.practiceStats,
+        growthStats: EMPTY_PROGRESS.growthStats,
       },
     },
   ]);

@@ -12,6 +12,17 @@ const {
   restoreStateFromProgress,
 } = require('../src/progress');
 
+const EMPTY_GROWTH_STATS = {
+  currentStreak: 0,
+  bestStreak: 0,
+  lastCompletedDate: null,
+  todayDate: null,
+  todayCompletedCount: 0,
+  totalCompletedCount: 0,
+  campaignCompletedCount: 0,
+  practiceCompletedCount: 0,
+};
+
 test('createProgressFromState serializes mutable puzzle state', () => {
   const initial = createPuzzleState(levels[0]);
   const filled = applyDigit(selectCell(initial, 0, 3), 6);
@@ -44,6 +55,7 @@ test('createProgressFromState serializes mutable puzzle state', () => {
       hard: null,
     },
   });
+  assert.deepEqual(progress.growthStats, EMPTY_GROWTH_STATS);
 });
 
 test('createProgressFromState serializes daily report when provided', () => {
@@ -122,12 +134,14 @@ test('EMPTY_PROGRESS is a safe default progress object', () => {
         hard: null,
       },
     },
+    growthStats: EMPTY_GROWTH_STATS,
   });
   assert.throws(() => EMPTY_PROGRESS.completedLevelIds.push('lab-02'), TypeError);
   assert.throws(() => EMPTY_PROGRESS.dailyReport.completedLevelIds.push('lab-02'), TypeError);
   EMPTY_PROGRESS.practiceStats.recentLevelIdsByDifficulty.hard = 'lab-10';
   assert.equal(Object.isFrozen(EMPTY_PROGRESS.practiceStats), true);
   assert.equal(Object.isFrozen(EMPTY_PROGRESS.practiceStats.recentLevelIdsByDifficulty), true);
+  assert.equal(Object.isFrozen(EMPTY_PROGRESS.growthStats), true);
   assert.deepEqual(EMPTY_PROGRESS.completedLevelIds, []);
   assert.deepEqual(EMPTY_PROGRESS.dailyReport.completedLevelIds, []);
   assert.deepEqual(EMPTY_PROGRESS.practiceStats.recentLevelIdsByDifficulty, {
@@ -161,6 +175,7 @@ test('normalizeProgress returns isolated empty progress for invalid input', () =
         hard: null,
       },
     },
+    growthStats: EMPTY_GROWTH_STATS,
   });
   assert.notEqual(normalized.completedLevelIds, EMPTY_PROGRESS.completedLevelIds);
   assert.notEqual(
@@ -172,6 +187,7 @@ test('normalizeProgress returns isolated empty progress for invalid input', () =
     normalized.practiceStats.recentLevelIdsByDifficulty,
     EMPTY_PROGRESS.practiceStats.recentLevelIdsByDifficulty,
   );
+  assert.notEqual(normalized.growthStats, EMPTY_PROGRESS.growthStats);
 
   normalized.completedLevelIds.push('lab-02');
   normalized.dailyReport.completedLevelIds.push('lab-03');
@@ -193,6 +209,7 @@ test('normalizeProgress returns isolated empty progress for invalid input', () =
     normal: null,
     hard: null,
   });
+  assert.deepEqual(EMPTY_PROGRESS.growthStats, EMPTY_GROWTH_STATS);
   assert.deepEqual(normalizeProgress({ version: 0, completedLevelIds: ['lab-02'] }), {
     version: 1,
     activeRun: null,
@@ -213,6 +230,7 @@ test('normalizeProgress returns isolated empty progress for invalid input', () =
         hard: null,
       },
     },
+    growthStats: EMPTY_GROWTH_STATS,
   });
 });
 
@@ -245,6 +263,7 @@ test('normalizeProgress filters completed levels and invalid active runs', () =>
           hard: null,
         },
       },
+      growthStats: EMPTY_GROWTH_STATS,
     },
   );
 });
@@ -276,6 +295,7 @@ test('normalizeProgress keeps old saves compatible with empty daily report', () 
           hard: null,
         },
       },
+      growthStats: EMPTY_GROWTH_STATS,
     },
   );
 });
@@ -362,6 +382,16 @@ test('createProgressFromRuns saves campaign and practice runs without state-mode
         hard: 'lab-10',
       },
     },
+    growthStats: {
+      currentStreak: 2,
+      bestStreak: 3,
+      lastCompletedDate: '2026-05-16',
+      todayDate: '2026-05-17',
+      todayCompletedCount: 2,
+      totalCompletedCount: 6,
+      campaignCompletedCount: 4,
+      practiceCompletedCount: 2,
+    },
   });
 
   assert.equal(progress.activeRun.mode, 'campaign');
@@ -371,6 +401,7 @@ test('createProgressFromRuns saves campaign and practice runs without state-mode
   assert.deepEqual(progress.completedLevelIds, ['lab-01', 'lab-02']);
   assert.deepEqual(progress.dailyReport.completedLevelIds, ['lab-01']);
   assert.equal(progress.practiceStats.totalCompleted, 4);
+  assert.equal(progress.growthStats.bestStreak, 3);
 });
 
 test('normalizeProgress keeps campaign and practice runs isolated', () => {
@@ -435,6 +466,33 @@ test('normalizeProgress keeps old saves compatible with empty practice fields', 
           hard: null,
         },
       },
+      growthStats: EMPTY_GROWTH_STATS,
     },
+  );
+});
+
+test('normalizeProgress keeps old saves compatible with empty growth stats', () => {
+  assert.deepEqual(
+    normalizeProgress({
+      version: 1,
+      activeRun: null,
+      completedLevelIds: ['lab-02'],
+      dailyReport: {
+        date: '2026-05-17',
+        completionCount: 1,
+        completedLevelIds: ['lab-02'],
+      },
+      practiceStats: {
+        totalCompleted: 1,
+        lastDifficulty: 'easy',
+        recentLevelIdsByDifficulty: {
+          intro: null,
+          easy: 'lab-02',
+          normal: null,
+          hard: null,
+        },
+      },
+    }).growthStats,
+    EMPTY_GROWTH_STATS,
   );
 });

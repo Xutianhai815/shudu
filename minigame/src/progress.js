@@ -1,5 +1,6 @@
 const { createPuzzleStateFromSnapshot } = require('./puzzle');
 const { createEmptyPracticeStats, normalizePracticeStats } = require('./game-modes');
+const { createEmptyGrowthStats, normalizeGrowthStats } = require('./growth-stats');
 
 const PROGRESS_VERSION = 1;
 const EMPTY_DAILY_REPORT = Object.freeze({
@@ -17,11 +18,13 @@ const EMPTY_PRACTICE_STATS = Object.freeze({
     hard: null,
   }),
 });
+const EMPTY_GROWTH_STATS = Object.freeze(createEmptyGrowthStats());
 const EMPTY_PROGRESS = Object.freeze({
   ...createEmptyProgress(),
   completedLevelIds: Object.freeze([]),
   dailyReport: EMPTY_DAILY_REPORT,
   practiceStats: EMPTY_PRACTICE_STATS,
+  growthStats: EMPTY_GROWTH_STATS,
 });
 
 function createEmptyProgress() {
@@ -32,6 +35,7 @@ function createEmptyProgress() {
     completedLevelIds: [],
     dailyReport: createEmptyDailyReport(),
     practiceStats: createEmptyPracticeStats(),
+    growthStats: createEmptyGrowthStats(),
   };
 }
 
@@ -55,6 +59,7 @@ function createProgressFromState(
     completedLevelIds,
     dailyReport,
     practiceStats: extras.practiceStats,
+    growthStats: extras.growthStats,
   });
 }
 
@@ -64,6 +69,7 @@ function createProgressFromRuns({
   completedLevelIds = [],
   dailyReport = createEmptyDailyReport(),
   practiceStats = createEmptyPracticeStats(),
+  growthStats = createEmptyGrowthStats(),
 } = {}) {
   return {
     version: PROGRESS_VERSION,
@@ -72,6 +78,7 @@ function createProgressFromRuns({
     completedLevelIds: normalizeCompletedLevelIds(completedLevelIds),
     dailyReport: normalizeDailyReport(dailyReport),
     practiceStats: normalizePracticeStats(practiceStats),
+    growthStats: normalizeGrowthStats(growthStats),
   };
 }
 
@@ -122,6 +129,7 @@ function normalizeProgress(progress) {
     completedLevelIds: normalizeCompletedLevelIds(progress.completedLevelIds),
     dailyReport: normalizeDailyReport(progress.dailyReport),
     practiceStats: normalizePracticeStats(progress.practiceStats),
+    growthStats: normalizeGrowthStats(progress.growthStats),
   };
 }
 
