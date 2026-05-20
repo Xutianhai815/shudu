@@ -9,7 +9,20 @@ const { levels } = require('../src/levels');
 const { createMenuLayout } = require('../src/menu');
 const { createPracticeMenuLayout } = require('../src/practice-menu');
 const { createPuzzleState } = require('../src/puzzle');
-const { renderGame, renderMenu, renderPracticeMenu } = require('../src/renderer');
+const { createTechniqueMenuLayout } = require('../src/technique-menu');
+const {
+  createTechniqueState,
+  getTechniqueById,
+  getTechniqueGroups,
+  getTechniques,
+} = require('../src/technique-training');
+const {
+  renderGame,
+  renderMenu,
+  renderPracticeMenu,
+  renderTechniqueLesson,
+  renderTechniqueMenu,
+} = require('../src/renderer');
 
 const SNAPSHOT_WIDTH = 430;
 const SNAPSHOT_HEIGHT = 932;
@@ -25,6 +38,18 @@ function createVisualSnapshots() {
     topInset: SNAPSHOT_TOP_INSET,
   });
   const practiceMenuLayout = createPracticeMenuLayout(SNAPSHOT_WIDTH, SNAPSHOT_HEIGHT, levels, {
+    topInset: SNAPSHOT_TOP_INSET,
+  });
+  const techniqueMenuLayout = createTechniqueMenuLayout(
+    SNAPSHOT_WIDTH,
+    SNAPSHOT_HEIGHT,
+    getTechniqueGroups(),
+    getTechniques(),
+    { topInset: SNAPSHOT_TOP_INSET },
+  );
+  const technique = getTechniqueById('single-empty');
+  const techniqueState = createTechniqueState(technique);
+  const techniqueLessonLayout = createLayout(SNAPSHOT_WIDTH, SNAPSHOT_HEIGHT, {
     topInset: SNAPSHOT_TOP_INSET,
   });
   const gameplayState = createPuzzleState(levels[0]);
@@ -44,6 +69,12 @@ function createVisualSnapshots() {
   return {
     menu: renderToSvg((ctx) => renderMenu(ctx, menuLayout)),
     practiceMenu: renderToSvg((ctx) => renderPracticeMenu(ctx, practiceMenuLayout)),
+    techniqueMenu: renderToSvg((ctx) => renderTechniqueMenu(ctx, techniqueMenuLayout)),
+    techniqueLesson: renderToSvg((ctx) =>
+      renderTechniqueLesson(ctx, techniqueState, techniqueLessonLayout, {
+        technique,
+      }),
+    ),
     gameplayDebug: renderToSvg((ctx) =>
       renderGame(ctx, gameplayState, gameplayLayout, {
         modeContext: {

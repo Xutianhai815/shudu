@@ -30,8 +30,25 @@ const EXPECTED_TECHNIQUES = [
   ['unique-rectangle', 'advanced', '唯一矩形'],
 ];
 
-const UNSAFE_COPY_PATTERN =
-  /已掌握|完成率|正确率|学习失败|等级不足|必须完成|金币|会员|商城|红包|老年痴呆|阿尔茨海默|治疗|预防|降低.*概率/;
+const UNSAFE_COPY_PATTERN = new RegExp(
+  [
+    '\u5df2\u638c\u63e1',
+    '\u5b8c\u6210\u7387',
+    '\u6b63\u786e\u7387',
+    '\u5b66\u4e60\u5931\u8d25',
+    '\u7b49\u7ea7\u4e0d\u8db3',
+    '\u5fc5\u987b\u5b8c\u6210',
+    '\u91d1\u5e01',
+    '\u4f1a\u5458',
+    '\u5546\u57ce',
+    '\u7ea2\u5305',
+    '\u8001\u5e74\u75f4\u5446',
+    '\u963f\u5c14\u8328\u6d77\u9ed8',
+    '\u6cbb\u7597',
+    '\u9884\u9632',
+    '\u964d\u4f4e.*\u6982\u7387',
+  ].join('|'),
+);
 
 function assertNoPressureFields(value) {
   assert.equal(Object.hasOwn(value, 'mastered'), false);

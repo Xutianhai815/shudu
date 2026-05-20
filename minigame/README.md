@@ -37,6 +37,10 @@ After importing into WeChat DevTools, verify these items in the simulator:
 - The home screen shows `一一数独` with two simplified mode cards: `闯关挑战` or `继续闯关`, and `自由练习`.
 - Tapping `闯关挑战` starts the campaign flow; if a campaign save exists, the card shows `继续闯关`.
 - Tapping `自由练习` opens the difficulty selector with `热身`, `稳定`, `标准`, and `进阶`.
+- Tapping `技巧训练` from the free practice page opens the technique training directory.
+- The technique training directory shows `初阶技巧` and `进阶技巧` without mastery, score, or progress copy.
+- Opening a technique such as `唯一空格` shows a short prompt, a board, `看提示`, and a one-step training goal.
+- Completing a technique training unit does not change campaign progress, free practice completion count, or streak count.
 - The board, keypad, and tool row all fit in iPhone SE-sized and larger portrait simulators.
 - Tapping an empty board cell updates the board highlight.
 - Tapping a fixed clue does not change the clue value.
@@ -65,6 +69,8 @@ The snapshots are written to `artifacts/visual/`:
 
 - `menu.svg`: dual-mode home screen with `闯关挑战` and `自由练习`.
 - `practiceMenu.svg`: free practice difficulty selector with `热身`, `稳定`, `标准`, and `进阶`.
+- `techniqueMenu.svg`: technique training directory with basic and advanced groups.
+- `techniqueLesson.svg`: one-step technique training lesson.
 - `gameplayDebug.svg`: campaign gameplay with the same top bar controls as the playable build.
 - `victory.svg`: campaign victory with `下一关已解锁` and a single `下一关` button.
 - `practiceVictory.svg`: free practice victory with `再练一局` and `换个难度`.
@@ -78,6 +84,7 @@ Use these as a quick visual QA pass before or after opening the project in WeCha
 - Lab Lines visual direction: pale graphite surface, charcoal board, and a clean basic Sudoku grid.
 - Touch support for selecting board cells, entering digits, toggling notes, restarting, and erasing.
 - Local lightweight sound effects for puzzle selection, digit input, tools, and completion.
+- Technique training entry from free practice, with 16 one-step lessons across `初阶技巧` and `进阶技巧`.
 - Neutral in-progress input feedback, completion detection, and a positive victory overlay.
 - Quiet companion feedback for all levels: front levels use lightweight observation/rhythm copy, while mid/late levels keep deeper focus-time, calm atmosphere, and long-session completion feedback.
 - Victory overlay actions are intentionally narrow: campaign advances with `下一关`, while free practice supports `再练一局` and `换个难度`.

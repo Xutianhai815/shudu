@@ -10,6 +10,19 @@ const {
 } = require('../src/companion-feedback');
 const { createPuzzleState } = require('../src/puzzle');
 
+const COMPANION_RISK_COPY_PATTERN = new RegExp(
+  [
+    '\u6b63\u786e',
+    '\u9519\u8bef',
+    '\u5feb\u5b8c\u6210',
+    '\u8fd8\u5dee',
+    '\u8001\u5e74\u75f4\u5446',
+    '\u963f\u5c14\u8328\u6d77\u9ed8',
+    '\u533b\u5b66',
+    '\u75be\u75c5',
+  ].join('|'),
+);
+
 test('registerCompanionAction creates tiered milestone toasts for every difficulty', () => {
   const introState = withFilledMutableCells(createPuzzleState(levelByDifficulty('intro')), 3);
   const easyState = withFilledMutableCells(createPuzzleState(levelByDifficulty('easy')), 5);
@@ -159,7 +172,7 @@ test('companion copy avoids process judgment and medical claim wording', () => {
     ...session.toastHistory.map((toast) => toast.text),
   ].join(' ');
 
-  assert.equal(/正确|错误|快完成|还差|老年痴呆|阿尔茨海默|医学|疾病/.test(copy), false);
+  assert.equal(COMPANION_RISK_COPY_PATTERN.test(copy), false);
 });
 
 function withFilledMutableCells(state, count) {

@@ -12,6 +12,29 @@ const {
   getTodayKey,
 } = require('../src/derust');
 
+const REVIEW_RISK_COPY_PATTERN = new RegExp(
+  [
+    '\u524d\u989d\u53f6',
+    '\u8001\u5e74\u75f4\u5446',
+    '\u963f\u5c14\u8328\u6d77\u9ed8',
+    '\u9884\u9632',
+    '\u964d\u4f4e.*\u98ce\u9669',
+    '\u533b\u5b66\u8bc1\u660e',
+    '\u60a3\u75c5\u6982\u7387',
+  ].join('|'),
+);
+const LONG_SESSION_RISK_COPY_PATTERN = new RegExp(
+  [
+    '\u592a\u6162',
+    '\u7528\u65f6\u8fc7\u957f',
+    '\u843d\u540e',
+    '\u8001\u5e74\u75f4\u5446',
+    '\u963f\u5c14\u8328\u6d77\u9ed8',
+    '\u533b\u5b66',
+    '\u75be\u75c5',
+  ].join('|'),
+);
+
 test('createCompletionFeedback returns playful derust copy for completed state', () => {
   const state = {
     ...createPuzzleState(levels[0]),
@@ -279,7 +302,7 @@ test('derust copy avoids disease or medical claim wording', () => {
     dailySummary.disclaimer,
   ].join(' ');
 
-  assert.equal(/前额叶|老年痴呆|阿尔茨海默|预防|降低.*风险|医学证明|患病概率/.test(copy), false);
+  assert.equal(REVIEW_RISK_COPY_PATTERN.test(copy), false);
 });
 
 test('createCompletionFeedback adapts completion copy for long sessions', () => {
@@ -359,5 +382,5 @@ test('long-session completion copy avoids speed pressure and medical claims', ()
     ...feedback.stats.map((stat) => `${stat.label} ${stat.value}`),
   ].join(' ');
 
-  assert.equal(/太慢|用时过长|落后|老年痴呆|阿尔茨海默|医学|疾病/.test(copy), false);
+  assert.equal(LONG_SESSION_RISK_COPY_PATTERN.test(copy), false);
 });

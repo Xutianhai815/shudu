@@ -22,6 +22,26 @@ const {
 } = require('../src/renderer');
 const { createCompletionFeedback } = require('../src/derust');
 
+const REVIEW_RISK_COPY_PATTERN = new RegExp(
+  [
+    '\u8001\u5e74\u75f4\u5446',
+    '\u963f\u5c14\u8328\u6d77\u9ed8',
+    '\u9884\u9632',
+    '\u964d\u4f4e.*\u98ce\u9669',
+    '\u533b\u5b66\u8bc1\u660e',
+    '\u60a3\u75c5\u6982\u7387',
+  ].join('|'),
+);
+const PRESSURE_COPY_PATTERN = new RegExp(
+  [
+    '\u5df2\u638c\u63e1',
+    '\u5b8c\u6210\u7387',
+    '\u6b63\u786e\u7387',
+    '\u5b66\u4e60\u5931\u8d25',
+    '\u7b49\u7ea7\u4e0d\u8db3',
+  ].join('|'),
+);
+
 test('renderer draws the first level without a browser or WeChat canvas', () => {
   const ctx = createMockCanvasContext();
   const state = createPuzzleState(levels[0]);
@@ -158,7 +178,7 @@ test('renderer draws simplified campaign victory without dense report copy', () 
   assert.equal(text.includes('娱乐数值，不代表医学效果。'), false);
   assert.equal(text.includes('再试一次'), false);
   assert.equal(text.includes('回首页'), false);
-  assert.equal(/老年痴呆|阿尔茨海默|预防|降低.*风险|医学证明|患病概率/.test(text), false);
+  assert.equal(REVIEW_RISK_COPY_PATTERN.test(text), false);
 });
 
 test('renderer draws completion feedback growth stat cards', () => {
@@ -829,7 +849,7 @@ test('renderer draws the technique training directory without pressure copy', ()
   assert.match(text, /进阶技巧/);
   assert.match(text, /唯一空格/);
   assert.match(text, /X-Wing/);
-  assert.equal(/已掌握|完成率|正确率|学习失败|等级不足/.test(text), false);
+  assert.equal(PRESSURE_COPY_PATTERN.test(text), false);
 });
 
 test('renderer draws a technique lesson without pressure copy', () => {
@@ -845,7 +865,7 @@ test('renderer draws a technique lesson without pressure copy', () => {
   assert.match(text, /唯一空格/);
   assert.match(text, /第一行只留出一个位置，找出这一行缺少的数字。/);
   assert.match(text, /看提示/);
-  assert.equal(/已掌握|完成率|正确率|学习失败/.test(text), false);
+  assert.equal(PRESSURE_COPY_PATTERN.test(text), false);
 });
 
 test('renderer hides normal tools in a technique lesson', () => {
