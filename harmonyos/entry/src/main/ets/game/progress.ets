@@ -7,43 +7,62 @@ export interface SavedRun {
   snapshot: PuzzleSnapshot;
 }
 
+export interface RecentLevelIdsByTrainingDifficulty {
+  warmup: string | null;
+  steady: string | null;
+  standard: string | null;
+  advanced: string | null;
+}
+
+export interface PracticeStats {
+  totalCompleted: number;
+  lastTrainingDifficulty: string | null;
+  recentLevelIdsByTrainingDifficulty: RecentLevelIdsByTrainingDifficulty;
+}
+
+export interface GrowthStats {
+  totalCompleted: number;
+  streakDays: number;
+  lastPlayedDate: string | null;
+}
+
 export interface AppProgress {
   schemaVersion: number;
   campaignRun: SavedRun | null;
   practiceRun: SavedRun | null;
   completedLevelIds: string[];
-  practiceStats: {
-    totalCompleted: number;
-    lastTrainingDifficulty: string | null;
-    recentLevelIdsByTrainingDifficulty: Record<string, string | null>;
-  };
-  growthStats: {
-    totalCompleted: number;
-    streakDays: number;
-    lastPlayedDate: string | null;
-  };
+  practiceStats: PracticeStats;
+  growthStats: GrowthStats;
 }
 
 export function createEmptyProgress(): AppProgress {
-  return {
+  const recentLevelIdsByTrainingDifficulty: RecentLevelIdsByTrainingDifficulty = {
+    warmup: null,
+    steady: null,
+    standard: null,
+    advanced: null,
+  };
+
+  const practiceStats: PracticeStats = {
+    totalCompleted: 0,
+    lastTrainingDifficulty: null,
+    recentLevelIdsByTrainingDifficulty: recentLevelIdsByTrainingDifficulty,
+  };
+
+  const growthStats: GrowthStats = {
+    totalCompleted: 0,
+    streakDays: 0,
+    lastPlayedDate: null,
+  };
+
+  const progress: AppProgress = {
     schemaVersion: 1,
     campaignRun: null,
     practiceRun: null,
     completedLevelIds: [],
-    practiceStats: {
-      totalCompleted: 0,
-      lastTrainingDifficulty: null,
-      recentLevelIdsByTrainingDifficulty: {
-        warmup: null,
-        steady: null,
-        standard: null,
-        advanced: null,
-      },
-    },
-    growthStats: {
-      totalCompleted: 0,
-      streakDays: 0,
-      lastPlayedDate: null,
-    },
+    practiceStats: practiceStats,
+    growthStats: growthStats,
   };
+
+  return progress;
 }

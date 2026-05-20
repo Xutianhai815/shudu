@@ -16,7 +16,13 @@ export const trainingOptions: TrainingOption[] = [
 ];
 
 export function getTrainingOption(trainingDifficulty: TrainingDifficulty): TrainingOption | null {
-  return trainingOptions.find((item: TrainingOption) => item.trainingDifficulty === trainingDifficulty) ?? null;
+  for (let index = 0; index < trainingOptions.length; index += 1) {
+    const option = trainingOptions[index];
+    if (option.trainingDifficulty === trainingDifficulty) {
+      return option;
+    }
+  }
+  return null;
 }
 
 export function choosePracticeLevel(levels: SudokuLevel[], trainingDifficulty: TrainingDifficulty, recentLevelId: string | null): SudokuLevel | null {
@@ -25,10 +31,24 @@ export function choosePracticeLevel(levels: SudokuLevel[], trainingDifficulty: T
     return null;
   }
 
-  const candidates = levels.filter((level: SudokuLevel) => level.difficulty === option.sourceDifficulty);
+  const candidates: SudokuLevel[] = [];
+  for (let index = 0; index < levels.length; index += 1) {
+    const level = levels[index];
+    if (level.difficulty === option.sourceDifficulty) {
+      candidates.push(level);
+    }
+  }
+
   if (candidates.length === 0) {
     return null;
   }
 
-  return candidates.find((level: SudokuLevel) => level.id !== recentLevelId) ?? candidates[0];
+  for (let index = 0; index < candidates.length; index += 1) {
+    const level = candidates[index];
+    if (level.id !== recentLevelId) {
+      return level;
+    }
+  }
+
+  return candidates[0];
 }

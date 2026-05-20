@@ -1,10 +1,10 @@
-import { SudokuLevel } from './types';
+import { Difficulty, SudokuLevel } from './types';
 
 interface LevelSpec {
   id: string;
   title: string;
   label: string;
-  difficulty: SudokuLevel['difficulty'];
+  difficulty: Difficulty;
   givens: string;
   solution: string;
 }
@@ -57,19 +57,41 @@ function parseGrid(value: string): number[][] {
   return rows;
 }
 
-export const levels: SudokuLevel[] = LEVEL_SPECS.map((level: LevelSpec): SudokuLevel => ({
-  ...level,
-  hints: 3,
-  rules: ['classic'],
-  givens: parseGrid(level.givens),
-  solution: parseGrid(level.solution),
-  notes: {},
-}));
+function createLevel(level: LevelSpec): SudokuLevel {
+  const rules: string[] = [];
+  rules.push('classic');
+
+  const sudokuLevel: SudokuLevel = {
+    id: level.id,
+    title: level.title,
+    label: level.label,
+    difficulty: level.difficulty,
+    givens: parseGrid(level.givens),
+    solution: parseGrid(level.solution),
+    hints: 3,
+    rules: rules,
+    notes: [],
+  };
+
+  return sudokuLevel;
+}
+
+function createLevels(): SudokuLevel[] {
+  const parsedLevels: SudokuLevel[] = [];
+  for (let index = 0; index < LEVEL_SPECS.length; index += 1) {
+    parsedLevels.push(createLevel(LEVEL_SPECS[index]));
+  }
+  return parsedLevels;
+}
+
+export const levels: SudokuLevel[] = createLevels();
 
 export function getLevelById(id: string): SudokuLevel {
-  const level = levels.find((item: SudokuLevel) => item.id === id);
-  if (!level) {
-    throw new Error(`Unknown level: ${id}`);
+  for (let index = 0; index < levels.length; index += 1) {
+    const level = levels[index];
+    if (level.id === id) {
+      return level;
+    }
   }
-  return level;
+  throw new Error(`Unknown level: ${id}`);
 }

@@ -19,6 +19,15 @@ HarmonyOS 原生数独应用工程。
 
 当前仓库路径包含中文目录名，Hvigor 会报 `Invalid project path`。HarmonyOS 原生工程的构建、预览、真机调试和 release 打包必须在只包含英文、数字、连字符、下划线、英文句点、英文括号、空格或 `@` 的路径下执行。
 
+命令行构建可使用 DevEco Studio 自带 SDK 和 JBR：
+
+```bash
+DEVECO_SDK_HOME=/Applications/DevEco-Studio.app/Contents/sdk \
+JAVA_HOME=/Applications/DevEco-Studio.app/Contents/jbr/Contents/Home \
+PATH=/Applications/DevEco-Studio.app/Contents/jbr/Contents/Home/bin:$PATH \
+/Applications/DevEco-Studio.app/Contents/tools/hvigor/bin/hvigorw assembleApp --no-daemon
+```
+
 ## Release Notes
 
 第一版上线前请核对：

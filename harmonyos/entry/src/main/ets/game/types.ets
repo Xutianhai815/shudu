@@ -14,6 +14,11 @@ export interface SudokuCell {
   notes: number[];
 }
 
+export interface SudokuNote {
+  key: string;
+  notes: number[];
+}
+
 export interface SudokuLevel {
   id: string;
   title: string;
@@ -23,7 +28,7 @@ export interface SudokuLevel {
   solution: number[][];
   hints: number;
   rules: string[];
-  notes: Record<string, number[]>;
+  notes: SudokuNote[];
 }
 
 export interface PuzzleState {

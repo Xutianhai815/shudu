@@ -9,60 +9,136 @@ function isGridIndex(value: number): boolean {
   return Number.isInteger(value) && value >= 0 && value < 9;
 }
 
+function createPosition(row: number, col: number): CellPosition {
+  const position: CellPosition = {
+    row: row,
+    col: col,
+  };
+  return position;
+}
+
+function cloneNotes(notes: number[]): number[] {
+  const nextNotes: number[] = [];
+  for (let index = 0; index < notes.length; index += 1) {
+    nextNotes.push(notes[index]);
+  }
+  return nextNotes;
+}
+
+function cloneCell(cell: SudokuCell): SudokuCell {
+  const nextCell: SudokuCell = {
+    row: cell.row,
+    col: cell.col,
+    value: cell.value,
+    fixed: cell.fixed,
+    notes: cloneNotes(cell.notes),
+  };
+  return nextCell;
+}
+
 function cloneCells(cells: SudokuCell[][]): SudokuCell[][] {
-  return cells.map((row: SudokuCell[]) =>
-    row.map((cell: SudokuCell) => ({
-      ...cell,
-      notes: [...cell.notes],
-    })),
-  );
+  const nextRows: SudokuCell[][] = [];
+  for (let row = 0; row < cells.length; row += 1) {
+    const nextCells: SudokuCell[] = [];
+    for (let col = 0; col < cells[row].length; col += 1) {
+      nextCells.push(cloneCell(cells[row][col]));
+    }
+    nextRows.push(nextCells);
+  }
+  return nextRows;
 }
 
 function findInitialSelected(givens: number[][]): CellPosition {
   for (let row = 0; row < 9; row += 1) {
     for (let col = 0; col < 9; col += 1) {
       if (givens[row][col] === 0) {
-        return { row, col };
+        return createPosition(row, col);
       }
     }
   }
 
-  return { row: 0, col: 0 };
+  return createPosition(0, 0);
 }
 
 function pushHistory(state: PuzzleState): PuzzleSnapshot[] {
-  return [
-    ...state.history,
-    {
-      selected: { ...state.selected },
-      noteMode: state.noteMode,
-      completed: state.completed,
-      cells: cloneCells(state.cells),
-    },
-  ].slice(-50);
+  const history: PuzzleSnapshot[] = [];
+  const start = Math.max(0, state.history.length - 49);
+  for (let index = start; index < state.history.length; index += 1) {
+    history.push(state.history[index]);
+  }
+
+  const snapshot: PuzzleSnapshot = {
+    selected: createPosition(state.selected.row, state.selected.col),
+    noteMode: state.noteMode,
+    completed: state.completed,
+    cells: cloneCells(state.cells),
+  };
+  history.push(snapshot);
+  return history;
+}
+
+function getLevelNotes(level: SudokuLevel, row: number, col: number): number[] {
+  const key = cellKey(row, col);
+  for (let index = 0; index < level.notes.length; index += 1) {
+    if (level.notes[index].key === key) {
+      return cloneNotes(level.notes[index].notes);
+    }
+  }
+  return [];
+}
+
+function createCell(row: number, col: number, value: number, notes: number[]): SudokuCell {
+  const cell: SudokuCell = {
+    row: row,
+    col: col,
+    value: value,
+    fixed: value !== 0,
+    notes: notes,
+  };
+  return cell;
+}
+
+function createCells(level: SudokuLevel): SudokuCell[][] {
+  const rows: SudokuCell[][] = [];
+  for (let row = 0; row < 9; row += 1) {
+    const cells: SudokuCell[] = [];
+    for (let col = 0; col < 9; col += 1) {
+      const value = level.givens[row][col];
+      cells.push(createCell(row, col, value, getLevelNotes(level, row, col)));
+    }
+    rows.push(cells);
+  }
+  return rows;
+}
+
+function cloneStateWithCells(state: PuzzleState, cells: SudokuCell[][], completed: boolean, includeHistory: boolean): PuzzleState {
+  const nextState: PuzzleState = {
+    level: state.level,
+    solution: state.solution,
+    selected: createPosition(state.selected.row, state.selected.col),
+    noteMode: state.noteMode,
+    completed: completed,
+    history: includeHistory ? pushHistory(state) : state.history,
+    cells: cells,
+  };
+  return nextState;
 }
 
 export function createPuzzleState(level?: SudokuLevel): PuzzleState {
-  const activeLevel = level ?? levels[0];
+  const activeLevel = level ? level : levels[0];
   const selected = findInitialSelected(activeLevel.givens);
 
-  return {
+  const state: PuzzleState = {
     level: activeLevel,
     solution: activeLevel.solution,
-    selected,
+    selected: selected,
     noteMode: false,
     completed: false,
     history: [],
-    cells: activeLevel.givens.map((row: number[], rowIndex: number) =>
-      row.map((value: number, colIndex: number) => ({
-        row: rowIndex,
-        col: colIndex,
-        value,
-        fixed: value !== 0,
-        notes: [...(activeLevel.notes[cellKey(rowIndex, colIndex)] ?? [])],
-      })),
-    ),
+    cells: createCells(activeLevel),
   };
+
+  return state;
 }
 
 export function selectCell(state: PuzzleState, row: number, col: number): PuzzleState {
@@ -70,10 +146,16 @@ export function selectCell(state: PuzzleState, row: number, col: number): Puzzle
     return state;
   }
 
-  return {
-    ...state,
-    selected: { row, col },
+  const nextState: PuzzleState = {
+    level: state.level,
+    solution: state.solution,
+    selected: createPosition(row, col),
+    noteMode: state.noteMode,
+    completed: state.completed,
+    history: state.history,
+    cells: state.cells,
   };
+  return nextState;
 }
 
 export function toggleNoteMode(state: PuzzleState): PuzzleState {
@@ -81,37 +163,34 @@ export function toggleNoteMode(state: PuzzleState): PuzzleState {
     return state;
   }
 
-  return {
-    ...state,
+  const nextState: PuzzleState = {
+    level: state.level,
+    solution: state.solution,
+    selected: state.selected,
     noteMode: !state.noteMode,
+    completed: state.completed,
+    history: state.history,
+    cells: state.cells,
   };
+  return nextState;
 }
 
 function toggleNote(state: PuzzleState, row: number, col: number, digit: number): PuzzleState {
-  const nextCells = state.cells.map((cellRow: SudokuCell[], rowIndex: number) =>
-    cellRow.map((cell: SudokuCell, colIndex: number) => {
-      if (rowIndex !== row || colIndex !== col) {
-        return cell;
-      }
+  const nextCells = cloneCells(state.cells);
+  const cell = nextCells[row][col];
+  const nextNotes = cloneNotes(cell.notes);
+  const existingIndex = nextNotes.indexOf(digit);
+  if (existingIndex >= 0) {
+    nextNotes.splice(existingIndex, 1);
+  } else {
+    nextNotes.push(digit);
+    nextNotes.sort((left: number, right: number) => left - right);
+  }
 
-      const nextNotes = cell.notes.includes(digit)
-        ? cell.notes.filter((note: number) => note !== digit)
-        : [...cell.notes, digit].sort((left: number, right: number) => left - right);
+  cell.value = 0;
+  cell.notes = nextNotes;
 
-      return {
-        ...cell,
-        value: 0,
-        notes: nextNotes,
-      };
-    }),
-  );
-
-  return {
-    ...state,
-    completed: false,
-    history: pushHistory(state),
-    cells: nextCells,
-  };
+  return cloneStateWithCells(state, nextCells, false, true);
 }
 
 export function applyDigit(state: PuzzleState, digit: number): PuzzleState {
@@ -119,7 +198,8 @@ export function applyDigit(state: PuzzleState, digit: number): PuzzleState {
     return state;
   }
 
-  const { row, col } = state.selected;
+  const row = state.selected.row;
+  const col = state.selected.col;
   const selectedCell = state.cells[row][col];
 
   if (selectedCell.fixed || state.completed) {
@@ -130,58 +210,29 @@ export function applyDigit(state: PuzzleState, digit: number): PuzzleState {
     return toggleNote(state, row, col, digit);
   }
 
-  const nextCells = state.cells.map((cellRow: SudokuCell[], rowIndex: number) =>
-    cellRow.map((cell: SudokuCell, colIndex: number) => {
-      if (rowIndex !== row || colIndex !== col) {
-        return cell;
-      }
+  const nextCells = cloneCells(state.cells);
+  nextCells[row][col].value = digit;
+  nextCells[row][col].notes = [];
 
-      return {
-        ...cell,
-        value: digit,
-        notes: [],
-      };
-    }),
-  );
+  const nextState: PuzzleState = cloneStateWithCells(state, nextCells, false, true);
 
-  const nextState: PuzzleState = {
-    ...state,
-    history: pushHistory(state),
-    cells: nextCells,
-  };
-
-  return {
-    ...nextState,
-    completed: isSolved(nextState),
-  };
+  nextState.completed = isSolved(nextState);
+  return nextState;
 }
 
 export function eraseSelected(state: PuzzleState): PuzzleState {
-  const { row, col } = state.selected;
+  const row = state.selected.row;
+  const col = state.selected.col;
   const selectedCell = state.cells[row][col];
 
   if (selectedCell.fixed || state.completed || (selectedCell.value === 0 && selectedCell.notes.length === 0)) {
     return state;
   }
 
-  return {
-    ...state,
-    completed: false,
-    history: pushHistory(state),
-    cells: state.cells.map((cellRow: SudokuCell[], rowIndex: number) =>
-      cellRow.map((cell: SudokuCell, colIndex: number) => {
-        if (rowIndex !== row || colIndex !== col) {
-          return cell;
-        }
-
-        return {
-          ...cell,
-          value: 0,
-          notes: [],
-        };
-      }),
-    ),
-  };
+  const nextCells = cloneCells(state.cells);
+  nextCells[row][col].value = 0;
+  nextCells[row][col].notes = [];
+  return cloneStateWithCells(state, nextCells, false, true);
 }
 
 export function restartLevel(state: PuzzleState): PuzzleState {
@@ -195,23 +246,30 @@ export function undo(state: PuzzleState): PuzzleState {
     return state;
   }
 
-  return {
-    ...state,
-    selected: { ...previous.selected },
+  const history: PuzzleSnapshot[] = [];
+  for (let index = 0; index < state.history.length - 1; index += 1) {
+    history.push(state.history[index]);
+  }
+
+  const nextState: PuzzleState = {
+    level: state.level,
+    solution: state.solution,
+    selected: createPosition(previous.selected.row, previous.selected.col),
     noteMode: previous.noteMode,
     completed: previous.completed,
     cells: cloneCells(previous.cells),
-    history: state.history.slice(0, -1),
+    history: history,
   };
+  return nextState;
 }
 
 export function getDuplicateKeys(state: PuzzleState): string[] {
-  const duplicates: Set<string> = new Set();
+  const duplicates: string[] = [];
 
   for (let row = 0; row < 9; row += 1) {
     const positions: CellPosition[] = [];
     for (let col = 0; col < 9; col += 1) {
-      positions.push({ row, col });
+      positions.push(createPosition(row, col));
     }
     markDuplicateGroup(state, duplicates, positions);
   }
@@ -219,7 +277,7 @@ export function getDuplicateKeys(state: PuzzleState): string[] {
   for (let col = 0; col < 9; col += 1) {
     const positions: CellPosition[] = [];
     for (let row = 0; row < 9; row += 1) {
-      positions.push({ row, col });
+      positions.push(createPosition(row, col));
     }
     markDuplicateGroup(state, duplicates, positions);
   }
@@ -229,37 +287,44 @@ export function getDuplicateKeys(state: PuzzleState): string[] {
       const positions: CellPosition[] = [];
       for (let row = blockRow; row < blockRow + 3; row += 1) {
         for (let col = blockCol; col < blockCol + 3; col += 1) {
-          positions.push({ row, col });
+          positions.push(createPosition(row, col));
         }
       }
       markDuplicateGroup(state, duplicates, positions);
     }
   }
 
-  return Array.from(duplicates);
+  return duplicates;
 }
 
-function markDuplicateGroup(state: PuzzleState, duplicates: Set<string>, positions: CellPosition[]): void {
-  const byDigit: Map<number, CellPosition[]> = new Map();
+function addDuplicateKey(duplicates: string[], row: number, col: number): void {
+  const key = cellKey(row, col);
+  if (duplicates.indexOf(key) < 0) {
+    duplicates.push(key);
+  }
+}
 
-  positions.forEach((position: CellPosition) => {
-    const value = state.cells[position.row][position.col].value;
-    if (value < 1 || value > 9) {
-      return;
+function markDuplicateGroup(state: PuzzleState, duplicates: string[], positions: CellPosition[]): void {
+  for (let digit = 1; digit <= 9; digit += 1) {
+    let count = 0;
+    for (let index = 0; index < positions.length; index += 1) {
+      const position = positions[index];
+      if (state.cells[position.row][position.col].value === digit) {
+        count += 1;
+      }
     }
 
-    const current = byDigit.get(value) ?? [];
-    current.push(position);
-    byDigit.set(value, current);
-  });
-
-  byDigit.forEach((items: CellPosition[]) => {
-    if (items.length < 2) {
-      return;
+    if (count < 2) {
+      continue;
     }
 
-    items.forEach((position: CellPosition) => duplicates.add(cellKey(position.row, position.col)));
-  });
+    for (let index = 0; index < positions.length; index += 1) {
+      const position = positions[index];
+      if (state.cells[position.row][position.col].value === digit) {
+        addDuplicateKey(duplicates, position.row, position.col);
+      }
+    }
+  }
 }
 
 export function isSolved(state: PuzzleState): boolean {
