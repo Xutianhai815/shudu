@@ -111,6 +111,8 @@ test('getTechniqueById and normalizeTechniqueId resolve stable technique ids', (
   assert.equal(normalizeTechniqueId('technique-single-empty'), 'single-empty');
   assert.equal(normalizeTechniqueId({ id: 'Swordfish' }), 'swordfish');
   assert.equal(normalizeTechniqueId(null), null);
+  assert.equal(normalizeTechniqueId('missing'), null);
+  assert.equal(normalizeTechniqueId('technique-missing'), null);
 
   const technique = getTechniqueById(' TECHNIQUE-BOARD-BASICS ');
   assert.equal(technique.id, 'board-basics');

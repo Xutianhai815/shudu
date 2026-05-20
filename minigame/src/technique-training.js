@@ -192,7 +192,9 @@ function normalizeTechniqueId(value) {
     return null;
   }
 
-  return normalized.replace(/^technique-/, '');
+  const id = normalized.replace(/^technique-/, '');
+
+  return TECHNIQUE_SPECS.some((technique) => technique.id === id) ? id : null;
 }
 
 function createTechniqueState(value) {
