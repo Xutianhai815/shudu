@@ -26,4 +26,4 @@ HarmonyOS 原生数独应用工程。
 - `docs/harmonyos-native-release-checklist.md`
 - `docs/harmonyos-native-store-copy.md`
 
-第一版保持离线可玩，不接入广告、支付、登录、排行榜或云同步。
+第一版保持离线可玩，不接入广告、支付、登录、排行榜或云同步，并关闭系统备份恢复能力。
