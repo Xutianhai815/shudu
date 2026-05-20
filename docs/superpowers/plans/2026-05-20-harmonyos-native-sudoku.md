@@ -66,6 +66,7 @@ Responsibilities:
 - Do not add `output/` preview files.
 - Do not modify `minigame/` unless the task explicitly says to add parity notes or run tests.
 - Do not continue `huawei-h5/`; it remains paused.
+- Hvigor does not accept the current repository path because it contains the Chinese directory name `微信小游戏`. DevEco build, preview, device run, and release packaging must use an ASCII/English-path worktree or copy, such as `/private/tmp/LabLinesSudoku`.
 
 ---
 
@@ -1645,6 +1646,7 @@ git commit -m "docs: record harmonyos verification notes"
 ## Execution Notes
 
 - Start with Task 1 only after DevEco Studio and HarmonyOS SDK are installed.
+- For build verification, use an English-path worktree or copy. Running Hvigor directly under `/Users/tianhai/Documents/微信小游戏/harmonyos` fails with `Invalid project path`.
 - If DevEco Studio generates different page registry paths, update the plan task locally and commit the actual generated files.
 - If ArkTS reports syntax differences in component callback props, prefer the current DevEco-generated idioms and keep the same component boundary.
 - Do not introduce medical claims, cloud sync, login, ads, payment, or analytics in the first version.

@@ -27,6 +27,7 @@ harmonyos/**/generated/
 
 # Generated visual/test artifacts
 minigame/artifacts/
+output/
 
 # Logs and temporary files
 *.log
