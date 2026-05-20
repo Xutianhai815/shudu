@@ -48,7 +48,7 @@ struct VictoryPage {
       })
 
       Column({ space: 14 }) {
-        Button('继续')
+        Button('再来一局')
           .width('100%')
           .height(52)
           .fontSize(17)
@@ -57,7 +57,7 @@ struct VictoryPage {
           .backgroundColor('#7A4E2D')
           .borderRadius(20)
           .onClick(() => {
-            router.back();
+            router.replaceUrl({ url: 'pages/GamePage', params: { mode: 'campaign' } });
           })
 
         Button('回到首页')

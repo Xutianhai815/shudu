@@ -95,7 +95,16 @@ struct GamePage {
   private handleDigit(digit: number): void {
     const wasCompleted = this.puzzle.completed;
     const wasNoteMode = this.puzzle.noteMode;
-    this.puzzle = applyDigit(this.puzzle, digit);
+    const previousPuzzle = this.puzzle;
+    const nextPuzzle = applyDigit(this.puzzle, digit);
+
+    if (nextPuzzle === previousPuzzle) {
+      this.feedbackText = wasCompleted ? '这一局已经完成。' : '题面数字不能修改。';
+      playSound('tool');
+      return;
+    }
+
+    this.puzzle = nextPuzzle;
     this.feedbackText = wasNoteMode ? `已记录草稿 ${digit}。` : `已填入 ${digit}。`;
     playSound('input');
 
