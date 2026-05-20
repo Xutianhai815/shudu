@@ -986,6 +986,19 @@ test('renderer draws final technique step as self input prompt', () => {
   assert.match(text, /现在填数/);
 });
 
+test('renderer handles incomplete technique lesson metadata defensively', () => {
+  const ctx = createMockCanvasContext();
+  const layout = createLayout(430, 932);
+  const technique = getTechniqueById('single-candidate');
+  const state = createTechniqueState(technique);
+
+  assert.doesNotThrow(() => {
+    renderTechniqueLesson(ctx, state, layout, { technique: {} });
+  });
+
+  assert.match(getDrawnText(ctx), /按步骤观察棋盘/);
+});
+
 function getDrawnText(ctx) {
   return ctx.calls
     .filter((call) => call.name === 'fillText')

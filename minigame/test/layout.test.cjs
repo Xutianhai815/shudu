@@ -206,9 +206,17 @@ test('debug compact layout keeps board and keypad usable on narrow viewport', ()
   const layout = createLayout(320, 568, { debugToolsEnabled: true });
   const lastKey = layout.keypad.keys.at(-1);
 
-  assert.ok(layout.board.size >= 190);
+  assert.ok(layout.board.size >= 220);
   assert.ok(layout.board.size / 9 >= 21);
   assert.ok(lastKey.y + lastKey.height <= 568 - layout.margin);
+});
+
+test('layout keeps normal compact gameplay board size when technique step button exists', () => {
+  const layout = createLayout(320, 568);
+
+  assert.ok(layout.techniqueStepButton);
+  assert.equal(layout.board.size, 222);
+  assert.equal(layout.tools[0].y, layout.keypad.y - 10 - layout.tools[0].height);
 });
 
 test('layout exposes a technique step button above the keypad', () => {

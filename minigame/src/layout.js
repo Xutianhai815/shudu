@@ -40,14 +40,14 @@ function createLayout(width, height, options = {}) {
   const boardGap = compact ? 8 : 12;
   const bottomGap = compact ? 6 : 12;
   const keypadY = height - margin - keypadHeight;
+  const toolsY = keypadY - 10 - toolsHeight;
   const techniqueStepButton = {
     x: margin,
-    y: keypadY - (compact ? 42 : 48),
+    y: compact ? keypadY - 42 : toolsY - 46,
     width: width - margin * 2,
     height: compact ? 32 : 36,
     action: 'techniqueNextStep',
   };
-  const toolsY = techniqueStepButton.y - (compact ? 0 : 10) - toolsHeight;
   const boardY = ruleStrip.y + ruleStrip.height + boardGap;
   const boardSize = Math.max(0, Math.min(width - margin * 2, toolsY - boardY - bottomGap));
   const board = {

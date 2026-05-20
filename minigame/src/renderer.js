@@ -615,15 +615,16 @@ function drawTechniqueCard(ctx, layout, card, railColor) {
 }
 
 function drawTechniqueLessonPrompt(ctx, layout, state, technique, options = {}) {
+  const lesson = technique && technique.lesson ? technique.lesson : {};
   const currentStep = options.currentStep || null;
   const totalSteps = options.totalSteps || 0;
   const currentStepIndex = options.currentStepIndex || 0;
   const completed = state && state.completed;
   const text = completed
-    ? technique.lesson.successText
+    ? lesson.successText || '完成这次观察。'
     : currentStep
       ? `${currentStep.title}：${currentStep.text}`
-      : technique.lesson.prompt;
+      : lesson.prompt || '按步骤观察棋盘。';
   const promptX = layout.margin;
   const promptY = layout.ruleStrip.y - 2;
   const promptWidth = layout.width - layout.margin * 2;
