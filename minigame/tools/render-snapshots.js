@@ -49,6 +49,7 @@ function createVisualSnapshots() {
   );
   const technique = getTechniqueById('single-empty');
   const techniqueState = createTechniqueState(technique);
+  const techniqueStep = technique.lesson.steps[0];
   const techniqueLessonLayout = createLayout(SNAPSHOT_WIDTH, SNAPSHOT_HEIGHT, {
     topInset: SNAPSHOT_TOP_INSET,
   });
@@ -73,6 +74,9 @@ function createVisualSnapshots() {
     techniqueLesson: renderToSvg((ctx) =>
       renderTechniqueLesson(ctx, techniqueState, techniqueLessonLayout, {
         technique,
+        currentStep: techniqueStep,
+        currentStepIndex: 0,
+        totalSteps: technique.lesson.steps.length,
       }),
     ),
     gameplayDebug: renderToSvg((ctx) =>

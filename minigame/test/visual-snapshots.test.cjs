@@ -23,7 +23,9 @@ test('visual snapshot renderer produces key menu gameplay and victory SVGs', () 
   assert.match(snapshots.techniqueMenu, /X-Wing/);
   assert.equal(PRESSURE_COPY_PATTERN.test(snapshots.techniqueMenu), false);
   assert.match(snapshots.techniqueLesson, /唯一空格/);
-  assert.match(snapshots.techniqueLesson, /看提示/);
+  assert.match(snapshots.techniqueLesson, /1\/4/);
+  assert.match(snapshots.techniqueLesson, /下一步/);
+  assert.doesNotMatch(snapshots.techniqueLesson, /看提示|草稿模式|重开|清除/);
   assert.equal(PRESSURE_COPY_PATTERN.test(snapshots.techniqueLesson), false);
   assert.match(snapshots.gameplayDebug, /起步热身/);
   assert.equal(/DEV 完成|08:42|Ⅱ/.test(snapshots.gameplayDebug), false);
