@@ -18,9 +18,9 @@ function createTechniqueMenuLayout(width, height, groups, techniques, options = 
   const titleY = backButton.y + backButton.height + (compact ? 22 : 34);
   const subtitleY = titleY + (compact ? 28 : 34);
   const columnGap = compact ? 8 : 10;
-  const groupGap = compact ? 12 : 16;
-  const cardGap = compact ? 8 : 10;
-  const groupHeaderHeight = compact ? 36 : 42;
+  const groupGap = compact ? 8 : 16;
+  const cardGap = compact ? 6 : 10;
+  const groupHeaderHeight = compact ? 30 : 42;
   const cardWidth = (width - margin * 2 - columnGap) / 2;
   const groupList = normalizeGroups(groups);
   const techniqueList = normalizeTechniques(techniques);
@@ -29,7 +29,7 @@ function createTechniqueMenuLayout(width, height, groups, techniques, options = 
 
     return sum + Math.ceil(count / 2);
   }, 0);
-  const contentStartY = subtitleY + (compact ? 24 : 34);
+  const contentStartY = subtitleY + (compact ? 18 : 34);
   const availableCardArea =
     height -
     margin -
@@ -37,7 +37,10 @@ function createTechniqueMenuLayout(width, height, groups, techniques, options = 
     groupHeaderHeight * groupList.length -
     groupGap * Math.max(0, groupList.length - 1) -
     cardGap * Math.max(0, rowCount - groupList.length);
-  const cardHeight = Math.max(52, Math.min(compact ? 58 : 66, availableCardArea / Math.max(1, rowCount)));
+  const cardHeight = Math.max(
+    compact ? 40 : 52,
+    Math.min(compact ? 52 : 66, availableCardArea / Math.max(1, rowCount)),
+  );
   const laidOutGroups = [];
   const techniqueCards = [];
   let cursorY = contentStartY;
@@ -72,6 +75,7 @@ function createTechniqueMenuLayout(width, height, groups, techniques, options = 
         summary: technique.summary,
         difficultyLabel: group.title,
         buttonLabel: '开始练习',
+        showSummary: !compact,
       });
     });
 

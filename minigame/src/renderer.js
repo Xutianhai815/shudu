@@ -521,7 +521,7 @@ function drawTechniqueGroups(ctx, layout) {
     ctx.textBaseline = 'alphabetic';
     ctx.fillText(group.title, group.x, group.y + (layout.compact ? 22 : 26));
 
-    if (group.subtitle) {
+    if (group.subtitle && !layout.compact) {
       ctx.fillStyle = 'rgba(24, 33, 31, 0.52)';
       setFont(ctx, layout, layout.compact ? '800 10px sans-serif' : '800 11px sans-serif');
       ctx.fillText(group.subtitle, group.x + 94, group.y + (layout.compact ? 21 : 25));
@@ -547,9 +547,11 @@ function drawTechniqueCard(ctx, layout, card, railColor) {
   ctx.textBaseline = 'alphabetic';
   ctx.fillText(card.title, card.x + 24, card.y + (layout.compact ? 22 : 25));
 
-  ctx.fillStyle = 'rgba(24, 33, 31, 0.56)';
-  setFont(ctx, layout, layout.compact ? '800 9px sans-serif' : '800 10px sans-serif');
-  wrapText(ctx, card.summary, card.x + 24, card.y + (layout.compact ? 40 : 44), card.width - 42, layout.compact ? 12 : 13);
+  if (card.showSummary !== false) {
+    ctx.fillStyle = 'rgba(24, 33, 31, 0.56)';
+    setFont(ctx, layout, layout.compact ? '800 9px sans-serif' : '800 10px sans-serif');
+    wrapText(ctx, card.summary, card.x + 24, card.y + (layout.compact ? 40 : 44), card.width - 42, layout.compact ? 12 : 13);
+  }
 
   ctx.fillStyle = 'rgba(8, 116, 113, 0.82)';
   setFont(ctx, layout, layout.compact ? '900 10px sans-serif' : '900 11px sans-serif');

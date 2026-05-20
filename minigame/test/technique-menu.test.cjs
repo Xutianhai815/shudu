@@ -55,6 +55,23 @@ test('createTechniqueMenuLayout starts below the reserved top safe area', () => 
   assert.ok(layout.techniqueCards.every((card) => card.y >= layout.subtitle.y));
 });
 
+test('createTechniqueMenuLayout keeps every technique card inside a compact 375x667 viewport', () => {
+  const layout = createTechniqueMenuLayout(375, 667, getTechniqueGroups(), getTechniques(), {
+    topInset: 0,
+  });
+
+  assertCardsStayWithinViewport(layout);
+});
+
+test('createTechniqueMenuLayout keeps every technique card inside a compact 375x667 viewport with top inset', () => {
+  const layout = createTechniqueMenuLayout(375, 667, getTechniqueGroups(), getTechniques(), {
+    topInset: 70,
+  });
+
+  assert.ok(layout.backButton.y >= 70);
+  assertCardsStayWithinViewport(layout);
+});
+
 test('hitTestTechniqueMenu maps back and technique cards', () => {
   const layout = createTechniqueMenuLayout(430, 932, getTechniqueGroups(), getTechniques());
   const back = layout.backButton;
@@ -80,3 +97,12 @@ test('hitTestTechniqueMenu ignores outside taps and missing layouts', () => {
   assert.equal(hitTestTechniqueMenu(layout, 1, 1), null);
   assert.equal(hitTestTechniqueMenu(null, 120, 120), null);
 });
+
+function assertCardsStayWithinViewport(layout) {
+  layout.techniqueCards.forEach((card) => {
+    assert.ok(
+      card.y + card.height <= layout.height - layout.margin,
+      `${card.id} bottom ${card.y + card.height} exceeds ${layout.height - layout.margin}`,
+    );
+  });
+}
