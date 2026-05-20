@@ -196,13 +196,25 @@ test('each technique lesson exposes three or four guided observation steps', () 
       assert.equal(step.title.length > 0, true);
       assert.equal(step.text.length > 0, true);
       assert.equal(step.inputEnabled, index === technique.lesson.steps.length - 1);
-      assert.equal(step.targetVisible, index >= technique.lesson.steps.length - 2);
       assert.ok(Array.isArray(step.highlightCells));
       assert.ok(Array.isArray(step.highlightUnits));
       assert.ok(Array.isArray(step.candidateHighlights));
       assert.ok(Array.isArray(step.shapeHighlights));
     });
+
+    const finalStepIndex = technique.lesson.steps.length - 1;
+    const inputStepIndexes = technique.lesson.steps
+      .map((step, index) => (step.inputEnabled ? index : null))
+      .filter((index) => index !== null);
+
+    assert.deepEqual(inputStepIndexes, [finalStepIndex], `${technique.id} should only enable final input`);
+    assert.equal(technique.lesson.steps.at(-2).targetVisible, true, `${technique.id} penultimate step shows target`);
+    assert.equal(technique.lesson.steps.at(-1).targetVisible, true, `${technique.id} final step shows target`);
   });
+
+  const singleCandidate = getTechniqueById('single-candidate');
+  assert.equal(singleCandidate.lesson.steps[0].targetVisible, true);
+  assert.equal(singleCandidate.lesson.steps[1].targetVisible, true);
 });
 
 test('basic technique lessons no longer look like one-empty-cell puzzles', () => {

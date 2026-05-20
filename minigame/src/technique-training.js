@@ -448,8 +448,8 @@ function createLessonStep(step, index, total) {
     highlightUnits: normalizeUnits(step.highlightUnits || []),
     candidateHighlights: normalizeCandidateHighlights(step.candidateHighlights || []),
     shapeHighlights: normalizeShapeHighlights(step.shapeHighlights || []),
-    targetVisible: index >= total - 2,
-    inputEnabled: index === total - 1,
+    targetVisible: step.targetVisible === true || index >= total - 2,
+    inputEnabled: step.inputEnabled === true || index === total - 1,
   };
 }
 
