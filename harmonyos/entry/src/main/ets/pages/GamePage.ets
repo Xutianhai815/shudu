@@ -15,7 +15,9 @@ import {
   toggleNoteMode,
 } from '../game/puzzle';
 import { PuzzleState, TrainingDifficulty } from '../game/types';
+import { createEmptyProgress } from '../game/progress';
 import { playSound } from '../services/sound';
+import { saveProgress } from '../services/storage';
 
 interface GamePageParams {
   mode?: string;
@@ -111,6 +113,12 @@ struct GamePage {
     if (!wasCompleted && this.puzzle.completed) {
       this.feedbackText = '完成了，准备查看反馈。';
       playSound('complete');
+      const progress = createEmptyProgress();
+      progress.completedLevelIds = [this.puzzle.level.id];
+      progress.growthStats.totalCompleted = 1;
+      progress.growthStats.streakDays = 1;
+      saveProgress(progress).catch(() => {
+      });
       router.replaceUrl({ url: 'pages/VictoryPage' });
     }
   }
