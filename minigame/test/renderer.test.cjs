@@ -852,6 +852,20 @@ test('renderer draws the technique training directory without pressure copy', ()
   assert.equal(PRESSURE_COPY_PATTERN.test(text), false);
 });
 
+test('renderer draws technique directory as a quiet course index', () => {
+  const ctx = createMockCanvasContext();
+  const layout = createTechniqueMenuLayout(430, 932, getTechniqueGroups(), getTechniques());
+
+  renderTechniqueMenu(ctx, layout);
+
+  const text = getDrawnText(ctx);
+  assert.match(text, /唯一候选/);
+  assert.match(text, /看见唯一可能/);
+  assert.equal(text.includes('开始练习'), false);
+  assert.equal(text.includes('结合同行、同列和同宫已有数字'), false);
+  assert.equal(/已掌握|完成率|正确率|学习失败|等级不足/.test(text), false);
+});
+
 test('renderer draws a technique lesson without pressure copy', () => {
   const ctx = createMockCanvasContext();
   const layout = createLayout(430, 932);

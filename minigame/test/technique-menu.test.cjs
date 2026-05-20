@@ -35,14 +35,37 @@ test('createTechniqueMenuLayout maps techniques without pressure progress fields
   );
   assert.equal(singleEmpty.group, 'basic');
   assert.equal(singleEmpty.title, '唯一空格');
-  assert.equal(singleEmpty.summary, '当一行只剩一个空格时，可以直接补上缺少的数字。');
+  assert.equal(singleEmpty.summary, undefined);
   assert.equal(singleEmpty.difficultyLabel, '初阶技巧');
-  assert.equal(singleEmpty.buttonLabel, '开始练习');
+  assert.equal(singleEmpty.buttonLabel, undefined);
   assert.equal(xWing.group, 'advanced');
   assert.equal(xWing.title, 'X-Wing');
   assert.equal(xWing.difficultyLabel, '进阶技巧');
   assert.ok(layout.techniqueCards.every((card) => card.progress === undefined));
   assert.ok(layout.techniqueCards.every((card) => card.mastered === undefined));
+});
+
+test('createTechniqueMenuLayout uses short subtitles instead of long summaries', () => {
+  const layout = createTechniqueMenuLayout(430, 932, getTechniqueGroups(), getTechniques());
+  const singleCandidate = layout.techniqueCards.find((card) => card.id === 'single-candidate');
+
+  assert.equal(singleCandidate.title, '唯一候选');
+  assert.equal(singleCandidate.shortSubtitle, '看见唯一可能');
+  assert.equal(singleCandidate.summary, undefined);
+  assert.equal(singleCandidate.buttonLabel, undefined);
+  assert.equal(singleCandidate.showButtonLabel, false);
+});
+
+test('createTechniqueMenuLayout hides short subtitles only on ultra compact viewports', () => {
+  const regular = createTechniqueMenuLayout(430, 932, getTechniqueGroups(), getTechniques());
+  const ultra = createTechniqueMenuLayout(320, 568, getTechniqueGroups(), getTechniques(), { topInset: 96 });
+
+  assert.ok(regular.techniqueCards.every((card) => card.showShortSubtitle === true));
+  assert.ok(ultra.techniqueCards.every((card) => card.showShortSubtitle === false));
+  ultra.techniqueCards.forEach((card) => {
+    assert.ok(card.height >= 32);
+    assert.ok(card.y + card.height <= ultra.height - ultra.margin);
+  });
 });
 
 test('createTechniqueMenuLayout starts below the reserved top safe area', () => {

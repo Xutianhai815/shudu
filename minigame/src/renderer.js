@@ -592,25 +592,21 @@ function drawTechniqueCard(ctx, layout, card, railColor) {
   roundRect(ctx, card.x + 10, card.y + 12, 5, card.height - 24, 3, railColor);
 
   ctx.fillStyle = '#18211f';
-  setFont(ctx, layout, layout.compact ? '900 15px sans-serif' : '900 17px sans-serif');
+  setFont(ctx, layout, layout.ultraCompact ? '900 12px sans-serif' : '900 15px sans-serif');
   ctx.textAlign = 'left';
-  ctx.textBaseline = 'alphabetic';
-  ctx.fillText(card.title, card.x + 24, card.y + (layout.compact ? 22 : 25));
+  ctx.textBaseline = 'middle';
+  ctx.fillText(card.title, card.x + 18, card.y + card.height / 2 - (card.showShortSubtitle ? 7 : 0));
 
-  if (card.showSummary !== false) {
-    ctx.fillStyle = 'rgba(24, 33, 31, 0.56)';
-    setFont(ctx, layout, layout.compact ? '800 9px sans-serif' : '800 10px sans-serif');
-    wrapText(ctx, card.summary, card.x + 24, card.y + (layout.compact ? 40 : 44), card.width - 42, layout.compact ? 12 : 13);
+  if (card.showShortSubtitle && card.shortSubtitle) {
+    ctx.fillStyle = 'rgba(24, 33, 31, 0.52)';
+    setFont(ctx, layout, '800 10px sans-serif');
+    ctx.fillText(card.shortSubtitle, card.x + 18, card.y + card.height / 2 + 11);
   }
 
-  if (card.showButtonLabel !== false) {
-    ctx.fillStyle = 'rgba(8, 116, 113, 0.82)';
-    setFont(ctx, layout, layout.compact ? '900 10px sans-serif' : '900 11px sans-serif');
-    ctx.textAlign = 'right';
-    ctx.textBaseline = 'alphabetic';
-    ctx.fillText(card.buttonLabel, card.x + card.width - 14, card.y + card.height - 10);
-  }
-
+  ctx.fillStyle = 'rgba(24, 33, 31, 0.32)';
+  setFont(ctx, layout, '900 16px sans-serif');
+  ctx.textAlign = 'right';
+  ctx.fillText('›', card.x + card.width - 14, card.y + card.height / 2 + 1);
   ctx.textAlign = 'left';
 }
 

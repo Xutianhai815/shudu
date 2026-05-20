@@ -4,6 +4,25 @@ const TECHNIQUE_AMBIENT_PARTICLES = Object.freeze([
   { xRatio: 0.7, yRatio: 0.74, radius: 34, color: 'rgba(24, 33, 31, 0.08)' },
 ]);
 
+const SHORT_SUBTITLES = Object.freeze({
+  'board-basics': '认识行列宫',
+  'single-empty': '找最后空格',
+  'single-candidate': '看见唯一可能',
+  'digit-scan': '扫描数字落点',
+  'box-elimination': '缩小宫内范围',
+  'line-box-interaction': '联动行列宫',
+  'notes-cleanup': '整理候选草稿',
+  'duplicate-check': '避开重复冲突',
+  'naked-pair': '识别显性数对',
+  'hidden-pair': '找隐藏组合',
+  'pointing-set': '观察指向关系',
+  'box-line-reduction': '区块清理候选',
+  'x-wing': '看两行两列',
+  swordfish: '看三行三列',
+  'xy-wing': '看双候选链',
+  'unique-rectangle': '识别矩形结构',
+});
+
 function createTechniqueMenuLayout(width, height, groups, techniques, options = {}) {
   const compact = height < 700;
   const ultraCompact = compact && (width <= 340 || height <= 600);
@@ -73,11 +92,10 @@ function createTechniqueMenuLayout(width, height, groups, techniques, options = 
         id: technique.id,
         group: technique.group,
         title: technique.title,
-        summary: technique.summary,
+        shortSubtitle: SHORT_SUBTITLES[technique.id] || '练一次关键步',
         difficultyLabel: group.title,
-        buttonLabel: '开始练习',
-        showSummary: !compact,
-        showButtonLabel: !ultraCompact,
+        showShortSubtitle: !ultraCompact,
+        showButtonLabel: false,
       });
     });
 
