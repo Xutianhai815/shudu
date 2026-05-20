@@ -1,5 +1,16 @@
 import router from '@ohos.router';
 import { TrainingOption, trainingOptions } from '../game/modes';
+import {
+  ACCENT_BROWN,
+  MUTED_PANEL,
+  PAGE_BACKGROUND,
+  PAGE_BOTTOM_PADDING,
+  PAGE_HORIZONTAL_PADDING,
+  PAGE_TOP_PADDING,
+  PRIMARY_TEXT,
+  SECONDARY_TEXT,
+  SOFT_PANEL,
+} from '../ui/layout';
 
 @Entry
 @Component
@@ -17,17 +28,17 @@ struct PracticePage {
   build() {
     Column() {
       Blank()
-        .height(72)
+        .height(PAGE_TOP_PADDING)
 
       Text('自由练习')
         .fontSize(32)
         .fontWeight(FontWeight.Bold)
-        .fontColor('#2B2118')
+        .fontColor(PRIMARY_TEXT)
 
       Text('选择今天想练的节奏。')
         .margin({ top: 10 })
         .fontSize(16)
-        .fontColor('#776857')
+        .fontColor(SECONDARY_TEXT)
 
       Column({ space: 14 }) {
         ForEach(trainingOptions, (option: TrainingOption) => {
@@ -36,12 +47,12 @@ struct PracticePage {
               Text(option.label)
                 .fontSize(20)
                 .fontWeight(FontWeight.Bold)
-                .fontColor('#2B2118')
+                .fontColor(PRIMARY_TEXT)
 
               Text(option.description)
                 .margin({ top: 4 })
                 .fontSize(14)
-                .fontColor('#776857')
+                .fontColor(SECONDARY_TEXT)
             }
             .alignItems(HorizontalAlign.Start)
             .width('100%')
@@ -49,7 +60,7 @@ struct PracticePage {
           .width('100%')
           .height(76)
           .padding({ left: 20, right: 20 })
-          .backgroundColor('#FFF9EF')
+          .backgroundColor(SOFT_PANEL)
           .borderRadius(20)
           .onClick(() => {
             this.openPracticeGame(option);
@@ -65,8 +76,8 @@ struct PracticePage {
         .height(52)
         .fontSize(17)
         .fontWeight(FontWeight.Medium)
-        .fontColor('#7A4E2D')
-        .backgroundColor('#E8D8BF')
+        .fontColor(ACCENT_BROWN)
+        .backgroundColor(MUTED_PANEL)
         .borderRadius(20)
         .onClick(() => {
           router.back();
@@ -76,7 +87,7 @@ struct PracticePage {
     }
     .width('100%')
     .height('100%')
-    .padding({ left: 24, right: 24, bottom: 36 })
-    .backgroundColor('#F7F0E4')
+    .padding({ left: PAGE_HORIZONTAL_PADDING, right: PAGE_HORIZONTAL_PADDING, bottom: PAGE_BOTTOM_PADDING })
+    .backgroundColor(PAGE_BACKGROUND)
   }
 }

@@ -18,6 +18,16 @@ import { PuzzleState, TrainingDifficulty } from '../game/types';
 import { createEmptyProgress } from '../game/progress';
 import { playSound } from '../services/sound';
 import { saveProgress } from '../services/storage';
+import {
+  ACCENT_BROWN,
+  GAME_BOTTOM_PADDING,
+  GAME_HORIZONTAL_PADDING,
+  GAME_TOP_PADDING,
+  MUTED_PANEL,
+  PAGE_BACKGROUND,
+  PRIMARY_TEXT,
+  SECONDARY_TEXT,
+} from '../ui/layout';
 
 interface GamePageParams {
   mode?: string;
@@ -131,8 +141,8 @@ struct GamePage {
           .padding({ left: 16, right: 16 })
           .fontSize(15)
           .fontWeight(FontWeight.Medium)
-          .fontColor('#7A4E2D')
-          .backgroundColor('#E8D8BF')
+          .fontColor(ACCENT_BROWN)
+          .backgroundColor(MUTED_PANEL)
           .borderRadius(16)
           .onClick(() => {
             router.back();
@@ -142,7 +152,7 @@ struct GamePage {
           .layoutWeight(1)
           .fontSize(18)
           .fontWeight(FontWeight.Bold)
-          .fontColor('#2B2118')
+          .fontColor(PRIMARY_TEXT)
           .textAlign(TextAlign.End)
       }
       .width('100%')
@@ -153,7 +163,7 @@ struct GamePage {
         .width('100%')
         .fontSize(14)
         .fontWeight(FontWeight.Medium)
-        .fontColor('#776857')
+        .fontColor(SECONDARY_TEXT)
         .textAlign(TextAlign.Start)
 
       SudokuBoard({
@@ -192,7 +202,12 @@ struct GamePage {
     }
     .width('100%')
     .height('100%')
-    .padding({ left: 18, right: 18, top: 56, bottom: 28 })
-    .backgroundColor('#F7F0E4')
+    .padding({
+      left: GAME_HORIZONTAL_PADDING,
+      right: GAME_HORIZONTAL_PADDING,
+      top: GAME_TOP_PADDING,
+      bottom: GAME_BOTTOM_PADDING,
+    })
+    .backgroundColor(PAGE_BACKGROUND)
   }
 }

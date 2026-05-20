@@ -22,12 +22,14 @@ export struct DigitPad {
   build() {
     Row({ space: 8 }) {
       ForEach(DIGITS, (digit: number) => {
-        Button(digit.toString())
+        Button() {
+          Text(digit.toString())
+            .fontSize(this.noteMode ? 18 : 22)
+            .fontWeight(this.noteMode ? FontWeight.Medium : FontWeight.Bold)
+            .fontColor(this.getDigitColor())
+        }
           .layoutWeight(1)
-          .height(48)
-          .fontSize(this.noteMode ? 18 : 20)
-          .fontWeight(this.noteMode ? FontWeight.Medium : FontWeight.Bold)
-          .fontColor(this.getDigitColor())
+          .height(52)
           .backgroundColor(this.getDigitBackground())
           .border({
             width: this.noteMode ? 1 : 0,

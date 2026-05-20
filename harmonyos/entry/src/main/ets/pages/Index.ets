@@ -1,4 +1,14 @@
 import router from '@ohos.router';
+import {
+  ACCENT_BROWN,
+  MUTED_PANEL,
+  PAGE_BACKGROUND,
+  PAGE_BOTTOM_PADDING,
+  PAGE_HORIZONTAL_PADDING,
+  PAGE_TOP_PADDING,
+  PRIMARY_TEXT,
+  SECONDARY_TEXT,
+} from '../ui/layout';
 
 @Entry
 @Component
@@ -21,26 +31,26 @@ struct Index {
   build() {
     Column() {
       Blank()
-        .height(96)
+        .height(PAGE_TOP_PADDING)
 
       Text('数独实验室')
-        .fontSize(34)
+        .fontSize(36)
         .fontWeight(FontWeight.Bold)
-        .fontColor('#2B2118')
+        .fontColor(PRIMARY_TEXT)
 
       Text('每天一局，给大脑做一次轻量除锈。')
         .margin({ top: 12 })
-        .fontSize(16)
-        .fontColor('#776857')
+        .fontSize(17)
+        .fontColor(SECONDARY_TEXT)
 
       Column({ space: 16 }) {
         Button('闯关挑战')
           .width('100%')
-          .height(56)
-          .fontSize(18)
+          .height(60)
+          .fontSize(19)
           .fontWeight(FontWeight.Medium)
           .fontColor('#FFF9EF')
-          .backgroundColor('#7A4E2D')
+          .backgroundColor(ACCENT_BROWN)
           .borderRadius(22)
           .onClick(() => {
             this.openCampaign();
@@ -48,11 +58,11 @@ struct Index {
 
         Button('自由练习')
           .width('100%')
-          .height(56)
-          .fontSize(18)
+          .height(60)
+          .fontSize(19)
           .fontWeight(FontWeight.Medium)
-          .fontColor('#2B2118')
-          .backgroundColor('#E8D8BF')
+          .fontColor(PRIMARY_TEXT)
+          .backgroundColor(MUTED_PANEL)
           .borderRadius(22)
           .onClick(() => {
             this.openPractice();
@@ -65,7 +75,7 @@ struct Index {
     }
     .width('100%')
     .height('100%')
-    .padding({ left: 28, right: 28, bottom: 44 })
-    .backgroundColor('#F7F0E4')
+    .padding({ left: PAGE_HORIZONTAL_PADDING, right: PAGE_HORIZONTAL_PADDING, bottom: PAGE_BOTTOM_PADDING })
+    .backgroundColor(PAGE_BACKGROUND)
   }
 }
