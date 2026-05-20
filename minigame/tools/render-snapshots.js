@@ -47,9 +47,9 @@ function createVisualSnapshots() {
     getTechniques(),
     { topInset: SNAPSHOT_TOP_INSET },
   );
-  const technique = getTechniqueById('single-empty');
+  const technique = getTechniqueById('single-candidate');
   const techniqueState = createTechniqueState(technique);
-  const techniqueStep = technique.lesson.steps[0];
+  const currentStep = technique.lesson.steps[0];
   const techniqueLessonLayout = createLayout(SNAPSHOT_WIDTH, SNAPSHOT_HEIGHT, {
     topInset: SNAPSHOT_TOP_INSET,
   });
@@ -74,7 +74,7 @@ function createVisualSnapshots() {
     techniqueLesson: renderToSvg((ctx) =>
       renderTechniqueLesson(ctx, techniqueState, techniqueLessonLayout, {
         technique,
-        currentStep: techniqueStep,
+        currentStep,
         currentStepIndex: 0,
         totalSteps: technique.lesson.steps.length,
       }),

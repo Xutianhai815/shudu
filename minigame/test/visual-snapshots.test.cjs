@@ -12,6 +12,7 @@ test('visual snapshot renderer produces key menu gameplay and victory SVGs', () 
 
   assert.match(snapshots.menu, /一一数独/);
   assert.match(snapshots.menu, /每天打开一局/);
+  assert.match(snapshots.menu, /技巧训练/);
   assert.match(snapshots.menu, /#17312b/);
   assert.match(snapshots.menu, /rgba\(22, 163, 160/);
   assert.doesNotMatch(snapshots.menu, /今日报告|今日除锈|累计除锈|今日第一局/);
@@ -20,12 +21,16 @@ test('visual snapshot renderer produces key menu gameplay and victory SVGs', () 
   assert.match(snapshots.techniqueMenu, /技巧训练/);
   assert.match(snapshots.techniqueMenu, /初阶技巧/);
   assert.match(snapshots.techniqueMenu, /进阶技巧/);
+  assert.match(snapshots.techniqueMenu, /看见唯一可能/);
   assert.match(snapshots.techniqueMenu, /X-Wing/);
+  assert.equal(snapshots.techniqueMenu.includes('开始练习'), false);
+  assert.equal(snapshots.techniqueMenu.includes('结合同行、同列和同宫已有数字'), false);
   assert.equal(PRESSURE_COPY_PATTERN.test(snapshots.techniqueMenu), false);
-  assert.match(snapshots.techniqueLesson, /唯一空格/);
+  assert.match(snapshots.techniqueLesson, /唯一候选/);
   assert.match(snapshots.techniqueLesson, /1\/4/);
-  assert.match(snapshots.techniqueLesson, /下一步/);
-  assert.doesNotMatch(snapshots.techniqueLesson, /看提示|草稿模式|重开|清除/);
+  assert.match(snapshots.techniqueLesson, /下一步|现在填数/);
+  assert.equal(/草稿模式|重开|清除/.test(snapshots.techniqueLesson), false);
+  assert.doesNotMatch(snapshots.techniqueLesson, /看提示/);
   assert.equal(PRESSURE_COPY_PATTERN.test(snapshots.techniqueLesson), false);
   assert.match(snapshots.gameplayDebug, /起步热身/);
   assert.equal(/DEV 完成|08:42|Ⅱ/.test(snapshots.gameplayDebug), false);

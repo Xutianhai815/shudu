@@ -37,10 +37,10 @@ After importing into WeChat DevTools, verify these items in the simulator:
 - The home screen shows `一一数独` with two simplified mode cards: `闯关挑战` or `继续闯关`, and `自由练习`.
 - Tapping `闯关挑战` starts the campaign flow; if a campaign save exists, the card shows `继续闯关`.
 - Tapping `自由练习` opens the difficulty selector with `热身`, `稳定`, `标准`, and `进阶`.
-- Tapping `技巧训练` from the free practice page opens the technique training directory.
-- The technique training directory shows `初阶技巧` and `进阶技巧` without mastery, score, or progress copy.
-- Opening a technique such as `唯一空格` shows a short prompt, a board, `看提示`, and a one-step training goal.
-- Completing a technique training unit does not change campaign progress, free practice completion count, or streak count.
+- Tapping the low-emphasis `技巧训练` entry on the home screen opens the technique training directory.
+- The technique training directory shows short course-index cards rather than long descriptions.
+- Technique lessons advance through guided observation steps before allowing the final target input.
+- Technique lessons hide the normal puzzle tool row and do not alter campaign, practice, or streak progress.
 - The board, keypad, and tool row all fit in iPhone SE-sized and larger portrait simulators.
 - Tapping an empty board cell updates the board highlight.
 - Tapping a fixed clue does not change the clue value.
@@ -67,10 +67,10 @@ node tools/render-snapshots.js
 
 The snapshots are written to `artifacts/visual/`:
 
-- `menu.svg`: dual-mode home screen with `闯关挑战` and `自由练习`.
+- `menu.svg`: dual-mode home screen plus low-emphasis `技巧训练` entry.
 - `practiceMenu.svg`: free practice difficulty selector with `热身`, `稳定`, `标准`, and `进阶`.
-- `techniqueMenu.svg`: technique training directory with basic and advanced groups.
-- `techniqueLesson.svg`: one-step technique training lesson.
+- `techniqueMenu.svg`: simplified technique training course index with short subtitles.
+- `techniqueLesson.svg`: guided step-by-step technique lesson.
 - `gameplayDebug.svg`: campaign gameplay with the same top bar controls as the playable build.
 - `victory.svg`: campaign victory with `下一关已解锁` and a single `下一关` button.
 - `practiceVictory.svg`: free practice victory with `再练一局` and `换个难度`.

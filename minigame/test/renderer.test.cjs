@@ -41,6 +41,9 @@ const PRESSURE_COPY_PATTERN = new RegExp(
     '\u7b49\u7ea7\u4e0d\u8db3',
   ].join('|'),
 );
+const HOME_MENU_PRESSURE_COPY_PATTERN = new RegExp(
+  ['\u63a8\u8350', '\u5b8c\u6210\u7387', '\u5df2\u638c\u63e1', '\u6b63\u786e\u7387'].join('|'),
+);
 
 test('renderer draws the first level without a browser or WeChat canvas', () => {
   const ctx = createMockCanvasContext();
@@ -863,7 +866,7 @@ test('renderer draws technique directory as a quiet course index', () => {
   assert.match(text, /看见唯一可能/);
   assert.equal(text.includes('开始练习'), false);
   assert.equal(text.includes('结合同行、同列和同宫已有数字'), false);
-  assert.equal(/已掌握|完成率|正确率|学习失败|等级不足/.test(text), false);
+  assert.equal(PRESSURE_COPY_PATTERN.test(text), false);
 });
 
 test('renderer draws a technique lesson without pressure copy', () => {
@@ -938,7 +941,7 @@ test('renderer draws low emphasis technique training entry on the home screen', 
   assert.match(text, /继续闯关/);
   assert.match(text, /自由练习/);
   assert.match(text, /技巧训练/);
-  assert.equal(/推荐|完成率|已掌握|正确率/.test(text), false);
+  assert.equal(HOME_MENU_PRESSURE_COPY_PATTERN.test(text), false);
 });
 
 test('renderer draws technique lesson step text progress and next step button', () => {
