@@ -48,6 +48,27 @@ test('createPracticeMenuLayout marks the first-time recommended training card', 
   assert.equal(recommended.statusLabel, '推荐');
 });
 
+test('createPracticeMenuLayout adds a lightweight technique training entry', () => {
+  const layout = createPracticeMenuLayout(430, 932, levels, {
+    recommendedTrainingDifficulty: 'steady',
+  });
+
+  assert.deepEqual(layout.techniqueTrainingButton, {
+    x: layout.margin,
+    y: layout.recommendation.y + 16,
+    width: 144,
+    height: 30,
+    label: '技巧训练',
+    helperText: '不会从哪看起？试试技巧训练。',
+  });
+
+  assert.equal(
+    layout.difficultyCards[0].y >
+      layout.techniqueTrainingButton.y + layout.techniqueTrainingButton.height,
+    true,
+  );
+});
+
 test('createPracticeMenuLayout keeps controls inside a short viewport', () => {
   const layout = createPracticeMenuLayout(320, 568, levels);
 
@@ -102,6 +123,19 @@ test('hitTestPracticeMenu maps back and enabled difficulty cards', () => {
       action: 'difficulty',
       difficulty: 'hard',
       trainingDifficulty: 'advanced',
+    },
+  );
+});
+
+test('hitTestPracticeMenu maps the technique training entry', () => {
+  const layout = createPracticeMenuLayout(430, 932, levels);
+  const button = layout.techniqueTrainingButton;
+
+  assert.deepEqual(
+    hitTestPracticeMenu(layout, button.x + button.width / 2, button.y + button.height / 2),
+    {
+      type: 'practiceMenu',
+      action: 'techniqueTraining',
     },
   );
 });

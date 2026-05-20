@@ -19,7 +19,16 @@ function createPracticeMenuLayout(width, height, levels, options = {}) {
   };
   const titleY = backButton.y + backButton.height + (compact ? 24 : 38);
   const cardGap = compact ? 10 : 14;
-  const cardStartY = titleY + (compact ? 58 : 88);
+  const techniqueTrainingButton = {
+    x: margin,
+    y: titleY + (compact ? 66 : 72),
+    width: compact ? 130 : 144,
+    height: compact ? 28 : 30,
+    label: '技巧训练',
+    helperText: '不会从哪看起？试试技巧训练。',
+  };
+  const cardStartY =
+    techniqueTrainingButton.y + techniqueTrainingButton.height + (compact ? 10 : 20);
   const availableCardHeight =
     (height - margin - cardStartY - cardGap * (TRAINING_OPTIONS.length - 1)) /
     TRAINING_OPTIONS.length;
@@ -53,6 +62,7 @@ function createPracticeMenuLayout(width, height, levels, options = {}) {
       y: titleY + (compact ? 50 : 56),
       text: recommendation,
     },
+    techniqueTrainingButton,
     ambientParticles: PRACTICE_AMBIENT_PARTICLES.map((particle) => ({
       x: width * particle.xRatio,
       y: height * particle.yRatio,
@@ -90,6 +100,13 @@ function hitTestPracticeMenu(layout, x, y) {
     return {
       type: 'practiceMenu',
       action: 'back',
+    };
+  }
+
+  if (layout.techniqueTrainingButton && isInside(layout.techniqueTrainingButton, x, y)) {
+    return {
+      type: 'practiceMenu',
+      action: 'techniqueTraining',
     };
   }
 
