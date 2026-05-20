@@ -233,8 +233,15 @@ function render() {
   }
 
   if (scene === 'techniqueLesson' && techniqueState && layout) {
+    const steps = currentTechnique && currentTechnique.lesson ? currentTechnique.lesson.steps || [] : [];
+    const currentStepIndex = Number.isInteger(techniqueState.currentStepIndex) ? techniqueState.currentStepIndex : 0;
+    const currentStep = steps[Math.min(currentStepIndex, Math.max(0, steps.length - 1))] || null;
     renderTechniqueLesson(ctx, techniqueState, layout, {
       technique: currentTechnique,
+      currentStep,
+      currentStepIndex,
+      totalSteps: steps.length,
+      status: techniqueState.completed ? 'success' : 'ready',
     });
     return;
   }
@@ -513,6 +520,7 @@ function handleTechniqueLessonTouch(touch) {
 
   const hit = hitTest(layout, touch.clientX, touch.clientY, false, {
     victoryMode: 'technique',
+    techniqueStepButton: true,
   });
 
   if (!hit) {
@@ -527,8 +535,15 @@ function handleTechniqueLessonTouch(touch) {
     return;
   }
 
+  if (hit.type === 'technique' && hit.action === 'techniqueNextStep') {
+    advanceTechniqueStep();
+    return;
+  }
+
+  const currentStep = getCurrentTechniqueStep();
+
   if (hit.type === 'cell') {
-    if (!isCurrentTechniqueTargetCell(hit.row, hit.col)) {
+    if (!currentStep || currentStep.inputEnabled !== true || !isCurrentTechniqueTargetCell(hit.row, hit.col)) {
       return;
     }
 
@@ -551,6 +566,11 @@ function handleTechniqueLessonTouch(touch) {
 
 function applyTechniqueDigit(previousState, digit) {
   if (!previousState || previousState.completed) {
+    return previousState;
+  }
+
+  const step = getCurrentTechniqueStep();
+  if (!step || step.inputEnabled !== true) {
     return previousState;
   }
 
@@ -585,6 +605,37 @@ function applyTechniqueDigit(previousState, digit) {
       }),
     ),
   };
+}
+
+function getCurrentTechniqueStep() {
+  const steps = currentTechnique && currentTechnique.lesson ? currentTechnique.lesson.steps || [] : [];
+  const index = Math.min(
+    Number.isInteger(techniqueState && techniqueState.currentStepIndex) ? techniqueState.currentStepIndex : 0,
+    Math.max(0, steps.length - 1),
+  );
+
+  return steps[index] || null;
+}
+
+function advanceTechniqueStep() {
+  if (!techniqueState || techniqueState.completed) {
+    return;
+  }
+
+  const steps = currentTechnique && currentTechnique.lesson ? currentTechnique.lesson.steps || [] : [];
+  const currentIndex = Number.isInteger(techniqueState.currentStepIndex) ? techniqueState.currentStepIndex : 0;
+  const nextIndex = Math.min(currentIndex + 1, Math.max(0, steps.length - 1));
+
+  if (nextIndex === currentIndex) {
+    return;
+  }
+
+  techniqueState = {
+    ...techniqueState,
+    currentStepIndex: nextIndex,
+  };
+  playSound('tool');
+  render();
 }
 
 function isCurrentTechniqueTargetCell(row, col) {

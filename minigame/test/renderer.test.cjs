@@ -878,7 +878,7 @@ test('renderer draws a technique lesson without pressure copy', () => {
   assert.match(text, /技巧训练/);
   assert.match(text, /唯一空格/);
   assert.match(text, /第一行只留出一个位置，找出这一行缺少的数字。/);
-  assert.match(text, /看提示/);
+  assert.match(text, /下一步/);
   assert.equal(PRESSURE_COPY_PATTERN.test(text), false);
 });
 
@@ -939,6 +939,51 @@ test('renderer draws low emphasis technique training entry on the home screen', 
   assert.match(text, /自由练习/);
   assert.match(text, /技巧训练/);
   assert.equal(/推荐|完成率|已掌握|正确率/.test(text), false);
+});
+
+test('renderer draws technique lesson step text progress and next step button', () => {
+  const ctx = createMockCanvasContext();
+  const layout = createLayout(430, 932);
+  const technique = getTechniqueById('single-candidate');
+  const state = createTechniqueState(technique);
+  const currentStep = technique.lesson.steps[0];
+
+  renderTechniqueLesson(ctx, state, layout, {
+    technique,
+    currentStep,
+    currentStepIndex: 0,
+    totalSteps: technique.lesson.steps.length,
+  });
+
+  const text = getDrawnText(ctx);
+  assert.match(text, new RegExp(currentStep.title));
+  assert.match(text, /1\/4/);
+  assert.match(text, /下一步/);
+  assert.equal(text.includes('看提示'), false);
+  assert.equal(/草稿模式|重开|清除/.test(text), false);
+});
+
+test('renderer draws final technique step as self input prompt', () => {
+  const ctx = createMockCanvasContext();
+  const layout = createLayout(430, 932);
+  const technique = getTechniqueById('single-candidate');
+  const state = {
+    ...createTechniqueState(technique),
+    currentStepIndex: technique.lesson.steps.length - 1,
+  };
+  const currentStep = technique.lesson.steps.at(-1);
+
+  renderTechniqueLesson(ctx, state, layout, {
+    technique,
+    currentStep,
+    currentStepIndex: technique.lesson.steps.length - 1,
+    totalSteps: technique.lesson.steps.length,
+  });
+
+  const text = getDrawnText(ctx);
+  assert.match(text, /自己填一步/);
+  assert.match(text, /填入目标数字|完成这次观察/);
+  assert.match(text, /现在填数/);
 });
 
 function getDrawnText(ctx) {

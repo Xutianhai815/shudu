@@ -94,6 +94,7 @@ function renderTechniqueLesson(ctx, state, layout, options = {}) {
       rules: ['classic'],
     },
     stateNoteMode: false,
+    techniqueStepHighlight: options.currentStep || null,
     modeContext: {
       mode: 'technique',
       label: '技巧训练',
@@ -106,9 +107,12 @@ function renderTechniqueLesson(ctx, state, layout, options = {}) {
     clear(ctx, viewLayout.width, viewLayout.height);
     drawBackground(ctx, viewLayout);
     drawTopBar(ctx, viewLayout);
-    drawTechniqueLessonPrompt(ctx, viewLayout, state, technique);
-    drawTechniqueFocusHalo(ctx, viewLayout, technique);
+    drawTechniqueLessonPrompt(ctx, viewLayout, state, technique, options);
     drawBoard(ctx, state, viewLayout);
+    drawTechniqueStepButton(ctx, viewLayout, {
+      currentStep: options.currentStep,
+      completed: state && state.completed,
+    });
     drawKeypad(ctx, viewLayout);
   } finally {
     ctx.restore();
@@ -610,15 +614,16 @@ function drawTechniqueCard(ctx, layout, card, railColor) {
   ctx.textAlign = 'left';
 }
 
-function drawTechniqueLessonPrompt(ctx, layout, state, technique) {
-  const completed = state && state.completed === true;
+function drawTechniqueLessonPrompt(ctx, layout, state, technique, options = {}) {
+  const currentStep = options.currentStep || null;
+  const totalSteps = options.totalSteps || 0;
+  const currentStepIndex = options.currentStepIndex || 0;
+  const completed = state && state.completed;
   const text = completed
-    ? technique.lesson && technique.lesson.successText
-      ? technique.lesson.successText
-      : '这一步完成了，观察路径已经连起来。'
-    : technique.lesson && technique.lesson.prompt
-      ? technique.lesson.prompt
-      : '观察目标格，填入这一步最确定的数字。';
+    ? technique.lesson.successText
+    : currentStep
+      ? `${currentStep.title}：${currentStep.text}`
+      : technique.lesson.prompt;
   const promptX = layout.margin;
   const promptY = layout.ruleStrip.y - 2;
   const promptWidth = layout.width - layout.margin * 2;
@@ -637,19 +642,168 @@ function drawTechniqueLessonPrompt(ctx, layout, state, technique) {
   setFont(ctx, layout, layout.compact ? '850 12px sans-serif' : '850 13px sans-serif');
   wrapText(ctx, text, promptX + 14, promptY + (layout.compact ? 18 : 19), promptWidth - 112, layout.compact ? 14 : 15);
 
-  if (!completed) {
-    const hintWidth = 70;
-    const hintX = promptX + promptWidth - hintWidth - 10;
-    const hintY = promptY + (panelHeight - 26) / 2;
-
-    roundRect(ctx, hintX, hintY, hintWidth, 26, 13, 'rgba(255, 200, 97, 0.24)');
-    ctx.fillStyle = '#8a691f';
+  if (!completed && totalSteps > 0) {
+    ctx.fillStyle = '#087471';
     setFont(ctx, layout, '900 12px sans-serif');
-    ctx.textAlign = 'center';
+    ctx.textAlign = 'right';
     ctx.textBaseline = 'middle';
-    ctx.fillText('看提示', hintX + hintWidth / 2, hintY + 13.5);
+    ctx.fillText(`${currentStepIndex + 1}/${totalSteps}`, promptX + promptWidth - 14, promptY + panelHeight / 2 + 1);
+    ctx.textAlign = 'left';
   }
 
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'alphabetic';
+}
+
+function drawTechniqueStepHighlights(ctx, layout, step) {
+  if (!step) {
+    return;
+  }
+
+  const { board } = layout;
+  const cellSize = board.size / 9;
+
+  ctx.save();
+  try {
+    roundedClip(ctx, board.x, board.y, board.size, board.size, 18);
+    drawTechniqueUnitHighlights(ctx, board, cellSize, step.highlightUnits || []);
+    drawTechniqueCellHighlights(ctx, board, cellSize, step.highlightCells || []);
+    drawTechniqueShapeHighlights(ctx, board, cellSize, step.shapeHighlights || []);
+    drawTechniqueCandidateHighlights(ctx, board, cellSize, step.candidateHighlights || []);
+  } finally {
+    ctx.restore();
+  }
+}
+
+function drawTechniqueUnitHighlights(ctx, board, cellSize, units) {
+  units.forEach((unit) => {
+    const rect = getTechniqueUnitRect(board, cellSize, unit);
+    if (!rect) {
+      return;
+    }
+
+    ctx.fillStyle = getTechniqueToneColor(unit.tone);
+    ctx.fillRect(rect.x, rect.y, rect.width, rect.height);
+  });
+}
+
+function getTechniqueUnitRect(board, cellSize, unit) {
+  if (!unit || !Number.isInteger(unit.index)) {
+    return null;
+  }
+
+  if (unit.type === 'row') {
+    return {
+      x: board.x,
+      y: board.y + unit.index * cellSize,
+      width: board.size,
+      height: cellSize,
+    };
+  }
+
+  if (unit.type === 'col') {
+    return {
+      x: board.x + unit.index * cellSize,
+      y: board.y,
+      width: cellSize,
+      height: board.size,
+    };
+  }
+
+  if (unit.type === 'box') {
+    return {
+      x: board.x + (unit.index % 3) * 3 * cellSize,
+      y: board.y + Math.floor(unit.index / 3) * 3 * cellSize,
+      width: cellSize * 3,
+      height: cellSize * 3,
+    };
+  }
+
+  return null;
+}
+
+function drawTechniqueCellHighlights(ctx, board, cellSize, cells) {
+  cells.forEach((cell) => {
+    if (!isTechniqueCell(cell)) {
+      return;
+    }
+
+    const x = board.x + cell.col * cellSize;
+    const y = board.y + cell.row * cellSize;
+    roundRect(ctx, x + 4, y + 4, cellSize - 8, cellSize - 8, 8, getTechniqueToneColor(cell.tone));
+  });
+}
+
+function drawTechniqueShapeHighlights(ctx, board, cellSize, shapes) {
+  shapes.forEach((shape) => {
+    const cells = Array.isArray(shape && shape.cells) ? shape.cells.filter(isTechniqueCell) : [];
+    if (cells.length === 0) {
+      return;
+    }
+
+    const minRow = Math.min(...cells.map((cell) => cell.row));
+    const maxRow = Math.max(...cells.map((cell) => cell.row));
+    const minCol = Math.min(...cells.map((cell) => cell.col));
+    const maxCol = Math.max(...cells.map((cell) => cell.col));
+
+    ctx.strokeStyle = getTechniqueToneColor(shape.tone || 'amber');
+    ctx.lineWidth = 3;
+    roundedPath(
+      ctx,
+      board.x + minCol * cellSize + 6,
+      board.y + minRow * cellSize + 6,
+      (maxCol - minCol + 1) * cellSize - 12,
+      (maxRow - minRow + 1) * cellSize - 12,
+      12,
+    );
+    ctx.stroke();
+  });
+}
+
+function drawTechniqueCandidateHighlights(ctx, board, cellSize, candidates) {
+  candidates.forEach((candidate) => {
+    if (!isTechniqueCell(candidate) || !Number.isInteger(candidate.digit)) {
+      return;
+    }
+
+    const noteCol = (candidate.digit - 1) % 3;
+    const noteRow = Math.floor((candidate.digit - 1) / 3);
+    const centerX = board.x + candidate.col * cellSize + cellSize * (0.25 + noteCol * 0.25);
+    const centerY = board.y + candidate.row * cellSize + cellSize * (0.25 + noteRow * 0.25);
+
+    ctx.beginPath();
+    ctx.fillStyle = getTechniqueToneColor(candidate.tone);
+    ctx.arc(centerX, centerY, Math.max(5, cellSize * 0.13), 0, Math.PI * 2);
+    ctx.fill();
+  });
+}
+
+function isTechniqueCell(cell) {
+  return Boolean(cell && Number.isInteger(cell.row) && Number.isInteger(cell.col));
+}
+
+function getTechniqueToneColor(tone) {
+  if (tone === 'muted') return 'rgba(24, 33, 31, 0.18)';
+  if (tone === 'amber') return 'rgba(255, 200, 97, 0.32)';
+  return 'rgba(22, 163, 160, 0.2)';
+}
+
+function drawTechniqueStepButton(ctx, layout, options = {}) {
+  if (options.completed || !layout.techniqueStepButton) {
+    return;
+  }
+
+  const { currentStep } = options;
+  const button = layout.techniqueStepButton;
+  const inputEnabled = currentStep && currentStep.inputEnabled === true;
+  const label = inputEnabled ? '现在填数' : '下一步';
+
+  roundRect(ctx, button.x, button.y, button.width, button.height, 14, inputEnabled ? '#16a3a0' : '#18211f');
+  ctx.fillStyle = '#f7fbf8';
+  setFont(ctx, layout, layout.compact ? '900 13px sans-serif' : '900 14px sans-serif');
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(label, button.x + button.width / 2, button.y + button.height / 2 + 1);
   ctx.textAlign = 'left';
   ctx.textBaseline = 'alphabetic';
 }
@@ -811,7 +965,9 @@ function drawBoard(ctx, state, layout) {
   ctx.save();
   roundedClip(ctx, board.x, board.y, board.size, board.size, 18);
 
-  state.cells.flat().forEach((cell) => {
+  const cells = state.cells.flat();
+
+  cells.forEach((cell) => {
     const flags = getCellFlags(state, cell.row, cell.col);
     const x = board.x + cell.col * cellSize;
     const y = board.y + cell.row * cellSize;
@@ -838,6 +994,14 @@ function drawBoard(ctx, state, layout) {
       ctx.lineWidth = 3;
       ctx.strokeRect(x + 2, y + 2, cellSize - 4, cellSize - 4);
     }
+  });
+
+  drawTechniqueStepHighlights(ctx, layout, layout.techniqueStepHighlight || null);
+
+  cells.forEach((cell) => {
+    const flags = getCellFlags(state, cell.row, cell.col);
+    const x = board.x + cell.col * cellSize;
+    const y = board.y + cell.row * cellSize;
 
     drawCellValue(ctx, layout, cell, flags, x, y, cellSize, colors);
   });

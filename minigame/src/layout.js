@@ -38,9 +38,16 @@ function createLayout(width, height, options = {}) {
   const toolsHeight = compact ? 48 : 58;
   const keypadHeight = compact ? 132 : Math.min(174, Math.max(144, height * 0.19));
   const boardGap = compact ? 8 : 12;
-  const bottomGap = compact ? 8 : 12;
+  const bottomGap = compact ? 6 : 12;
   const keypadY = height - margin - keypadHeight;
-  const toolsY = keypadY - 10 - toolsHeight;
+  const techniqueStepButton = {
+    x: margin,
+    y: keypadY - (compact ? 42 : 48),
+    width: width - margin * 2,
+    height: compact ? 32 : 36,
+    action: 'techniqueNextStep',
+  };
+  const toolsY = techniqueStepButton.y - (compact ? 0 : 10) - toolsHeight;
   const boardY = ruleStrip.y + ruleStrip.height + boardGap;
   const boardSize = Math.max(0, Math.min(width - margin * 2, toolsY - boardY - bottomGap));
   const board = {
@@ -83,6 +90,7 @@ function createLayout(width, height, options = {}) {
     board,
     tools,
     keypad,
+    techniqueStepButton,
     victory,
     debugCompleteButton: null,
   };
@@ -178,6 +186,10 @@ function hitTest(layout, x, y, completed = false, options = {}) {
       type: 'nav',
       action: layout.modeSwitchButton.action,
     };
+  }
+
+  if (options.techniqueStepButton && layout.techniqueStepButton && isInside(layout.techniqueStepButton, x, y)) {
+    return { type: 'technique', action: layout.techniqueStepButton.action };
   }
 
   const { board } = layout;

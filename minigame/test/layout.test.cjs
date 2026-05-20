@@ -210,3 +210,26 @@ test('debug compact layout keeps board and keypad usable on narrow viewport', ()
   assert.ok(layout.board.size / 9 >= 21);
   assert.ok(lastKey.y + lastKey.height <= 568 - layout.margin);
 });
+
+test('layout exposes a technique step button above the keypad', () => {
+  const layout = createLayout(430, 932);
+
+  assert.ok(layout.techniqueStepButton);
+  assert.equal(layout.techniqueStepButton.action, 'techniqueNextStep');
+  assert.ok(layout.techniqueStepButton.y > layout.board.y + layout.board.size);
+  assert.ok(layout.techniqueStepButton.y + layout.techniqueStepButton.height <= layout.keypad.y - 8);
+});
+
+test('hitTest maps technique step button when requested', () => {
+  const layout = createLayout(430, 932);
+  const button = layout.techniqueStepButton;
+
+  assert.deepEqual(hitTest(layout, button.x + button.width / 2, button.y + button.height / 2, false, {
+    techniqueStepButton: true,
+  }), {
+    type: 'technique',
+    action: 'techniqueNextStep',
+  });
+
+  assert.equal(hitTest(layout, button.x + button.width / 2, button.y + button.height / 2), null);
+});

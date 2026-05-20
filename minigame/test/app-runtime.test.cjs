@@ -256,6 +256,8 @@ test('app runtime completes a technique lesson from the free practice entry', ()
     assert.equal(lesson.state.completed, false);
     assert.match(runtime.drawnText(), /唯一空格/);
 
+    advanceTechniqueLessonToInput(runtime);
+    lesson = runtime.latestTechniqueLessonCall();
     tapCell(runtime, lesson.layout, 0, 1);
     lesson = runtime.latestTechniqueLessonCall();
     tapDigit(runtime, lesson.layout, 3);
@@ -290,6 +292,8 @@ test('app runtime keeps technique lesson input target focused', () => {
     assert.deepEqual(lesson.state.selected, originalSelected);
     assert.equal(lesson.state.cells[0][2].value, nonTargetValue);
 
+    advanceTechniqueLessonToInput(runtime);
+    lesson = runtime.latestTechniqueLessonCall();
     tapDigit(runtime, lesson.layout, 9);
     lesson = runtime.latestTechniqueLessonCall();
     assert.equal(lesson.state.completed, false);
@@ -314,6 +318,8 @@ test('app runtime technique training does not persist campaign, practice, or gro
     tapTechniqueCard(runtime, 'single-empty');
 
     let lesson = runtime.latestTechniqueLessonCall();
+    advanceTechniqueLessonToInput(runtime);
+    lesson = runtime.latestTechniqueLessonCall();
     tapCell(runtime, lesson.layout, 0, 1);
     lesson = runtime.latestTechniqueLessonCall();
     tapDigit(runtime, lesson.layout, 3);
@@ -357,6 +363,37 @@ test('app runtime preserves stored campaign and practice runs through technique 
         trainingDifficulty: 'steady',
       }),
     );
+  } finally {
+    runtime.restore();
+  }
+});
+
+test('app runtime advances technique lesson steps before allowing input', () => {
+  const runtime = bootAppRuntime();
+
+  try {
+    tapMenuTechniqueTraining(runtime);
+    tapTechniqueCard(runtime, 'single-candidate');
+
+    let lesson = runtime.latestTechniqueLessonCall();
+    const target = lesson.options.technique.lesson.target;
+    assert.equal(lesson.state.currentStepIndex, 0);
+
+    tapCell(runtime, lesson.layout, target.row, target.col);
+    tapDigit(runtime, lesson.layout, target.digit);
+    assert.equal(runtime.latestTechniqueLessonCall().state.completed, false);
+    assert.equal(runtime.latestTechniqueLessonCall().state.cells[target.row][target.col].value, 0);
+
+    while (!runtime.latestTechniqueLessonCall().options.currentStep.inputEnabled) {
+      tapTechniqueNextStep(runtime);
+    }
+
+    lesson = runtime.latestTechniqueLessonCall();
+    assert.equal(lesson.options.currentStep.inputEnabled, true);
+    tapCell(runtime, lesson.layout, target.row, target.col);
+    tapDigit(runtime, lesson.layout, target.digit);
+
+    assert.equal(runtime.latestTechniqueLessonCall().state.completed, true);
   } finally {
     runtime.restore();
   }
@@ -554,6 +591,12 @@ function tapPracticeTechniqueTraining(runtime) {
   runtime.touch(button.x + button.width / 2, button.y + button.height / 2);
 }
 
+function tapMenuTechniqueTraining(runtime) {
+  const entry = runtime.latestMenuCall().layout.techniqueTrainingEntry;
+  assert.ok(entry);
+  runtime.touch(entry.x + entry.width / 2, entry.y + entry.height / 2);
+}
+
 function tapTechniqueCard(runtime, techniqueId) {
   const card = runtime.latestTechniqueMenuCall().layout.techniqueCards.find((item) => item.id === techniqueId);
   assert.ok(card);
@@ -570,6 +613,18 @@ function tapTechniqueLessonBack(runtime) {
   const button = runtime.latestTechniqueLessonCall().layout.backButton;
   assert.ok(button);
   runtime.touch(button.x + button.width / 2, button.y + button.height / 2);
+}
+
+function tapTechniqueNextStep(runtime) {
+  const button = runtime.latestTechniqueLessonCall().layout.techniqueStepButton;
+  assert.ok(button);
+  runtime.touch(button.x + button.width / 2, button.y + button.height / 2);
+}
+
+function advanceTechniqueLessonToInput(runtime) {
+  while (!runtime.latestTechniqueLessonCall().options.currentStep.inputEnabled) {
+    tapTechniqueNextStep(runtime);
+  }
 }
 
 function tapVictoryAction(runtime, action) {
