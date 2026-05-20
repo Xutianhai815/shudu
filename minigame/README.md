@@ -1,4 +1,4 @@
-# Lab Lines Sudoku WeChat Minigame
+# 一一数独微信小游戏
 
 This folder is a lightweight WeChat Mini Game project ported from the browser UI prototype.
 
@@ -34,9 +34,9 @@ The gameplay top bar intentionally only shows back navigation and level metadata
 
 After importing into WeChat DevTools, verify these items in the simulator:
 
-- The home screen shows `数独实验室` with two simplified mode cards: `闯关挑战` and `自由练习`.
+- The home screen shows `一一数独` with two simplified mode cards: `闯关挑战` or `继续闯关`, and `自由练习`.
 - Tapping `闯关挑战` starts the campaign flow; if a campaign save exists, the card shows `继续闯关`.
-- Tapping `自由练习` opens the difficulty selector with `入门`, `简单`, `标准`, and `挑战`.
+- Tapping `自由练习` opens the difficulty selector with `热身`, `稳定`, `标准`, and `进阶`.
 - The board, keypad, and tool row all fit in iPhone SE-sized and larger portrait simulators.
 - Tapping an empty board cell updates the board highlight.
 - Tapping a fixed clue does not change the clue value.
@@ -64,7 +64,7 @@ node tools/render-snapshots.js
 The snapshots are written to `artifacts/visual/`:
 
 - `menu.svg`: dual-mode home screen with `闯关挑战` and `自由练习`.
-- `practiceMenu.svg`: free practice difficulty selector with `入门`, `简单`, `标准`, and `挑战`.
+- `practiceMenu.svg`: free practice difficulty selector with `热身`, `稳定`, `标准`, and `进阶`.
 - `gameplayDebug.svg`: campaign gameplay with the same top bar controls as the playable build.
 - `victory.svg`: campaign victory with `下一关已解锁` and a single `下一关` button.
 - `practiceVictory.svg`: free practice victory with `再练一局` and `换个难度`.
@@ -83,7 +83,7 @@ Use these as a quick visual QA pass before or after opening the project in WeCha
 - Victory overlay actions are intentionally narrow: campaign advances with `下一关`, while free practice supports `再练一局` and `换个难度`.
 - The first screen intentionally hides the full level list; players progress through the main flow from `闯关挑战`.
 - Independent local saves for campaign runs and free practice runs.
-- Data-driven level metadata in `src/levels.js`, including 12 progressive basic Sudoku levels with givens, solutions, hints, and rule chips.
+- Data-driven level metadata in `src/levels.js`, including 24 progressive basic Sudoku levels with givens, solutions, and difficulty bands.
 - Pure puzzle/layout modules that can be tested with Node.
 
 ## Multi-Platform Runtime
