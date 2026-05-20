@@ -17,6 +17,14 @@ huawei-h5/dist/
 huawei-h5/build/
 *.rpk
 
+# HarmonyOS / DevEco Studio generated local files
+harmonyos/.idea/
+harmonyos/.hvigor/
+harmonyos/build/
+harmonyos/**/build/
+harmonyos/**/.preview/
+harmonyos/**/generated/
+
 # Generated visual/test artifacts
 minigame/artifacts/
 
