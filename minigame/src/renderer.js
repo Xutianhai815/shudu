@@ -279,6 +279,7 @@ function drawMenuActions(ctx, layout) {
   if (layout.modeCards) {
     drawMenuProgressSummaries(ctx, layout);
     drawMenuModeCards(ctx, layout, layout.modeCards);
+    drawHomepageTechniqueEntry(ctx, layout);
     return;
   }
 
@@ -366,6 +367,23 @@ function drawMenuModeCards(ctx, layout, modeCards) {
     ctx.textAlign = 'left';
     ctx.textBaseline = 'alphabetic';
   });
+}
+
+function drawHomepageTechniqueEntry(ctx, layout) {
+  const entry = layout.techniqueTrainingEntry;
+
+  if (!entry) {
+    return;
+  }
+
+  roundRect(ctx, entry.x, entry.y, entry.width, entry.height, entry.height / 2, 'rgba(255, 255, 255, 0.46)');
+  ctx.fillStyle = '#087471';
+  setFont(ctx, layout, layout.compact ? '850 11px sans-serif' : '900 12px sans-serif');
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(entry.label, entry.x + entry.width / 2, entry.y + entry.height / 2 + 0.5);
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'alphabetic';
 }
 
 function drawMenuDifficultyDots(ctx, layout, card, primary) {

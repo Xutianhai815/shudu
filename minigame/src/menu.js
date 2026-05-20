@@ -86,6 +86,21 @@ function createMenuLayout(width, height, levels, progressSummary = {}) {
       label: practiceCopy.buttonLabel,
     },
   };
+  const techniqueEntryWidth = compact ? 118 : 132;
+  const techniqueEntryHeight = compact ? 28 : 30;
+  const techniqueTrainingEntry = {
+    x: (width - techniqueEntryWidth) / 2,
+    y: Math.min(
+      height - margin - techniqueEntryHeight,
+      modeCards.practice.y + modeCards.practice.height + (compact ? 8 : 12),
+    ),
+    width: techniqueEntryWidth,
+    height: techniqueEntryHeight,
+    action: 'techniqueTraining',
+    label: '技巧训练',
+    helperText: null,
+    emphasis: 'low',
+  };
 
   return {
     width,
@@ -113,6 +128,7 @@ function createMenuLayout(width, height, levels, progressSummary = {}) {
     })),
     growthSummary: createGrowthSummary(growthStats),
     modeCards,
+    techniqueTrainingEntry,
     derustSummary: { visible: false },
     levelCards: [],
   };
@@ -226,6 +242,13 @@ function hitTestMenu(layout, x, y) {
     return {
       type: 'menu',
       action: 'practice',
+    };
+  }
+
+  if (layout.techniqueTrainingEntry && isInside(layout.techniqueTrainingEntry, x, y)) {
+    return {
+      type: 'menu',
+      action: 'techniqueTraining',
     };
   }
 

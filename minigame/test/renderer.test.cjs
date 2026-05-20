@@ -911,6 +911,22 @@ test('renderer marks unavailable free training difficulties as closed', () => {
   assert.match(text, /暂未开放/);
 });
 
+test('renderer draws low emphasis technique training entry on the home screen', () => {
+  const ctx = createMockCanvasContext();
+  const menuLayout = createMenuLayout(430, 932, levels, {
+    hasActiveRun: true,
+    activeRun: { levelId: 'lab-02' },
+  });
+
+  renderMenu(ctx, menuLayout);
+
+  const text = getDrawnText(ctx);
+  assert.match(text, /继续闯关/);
+  assert.match(text, /自由练习/);
+  assert.match(text, /技巧训练/);
+  assert.equal(/推荐|完成率|已掌握|正确率/.test(text), false);
+});
+
 function getDrawnText(ctx) {
   return ctx.calls
     .filter((call) => call.name === 'fillText')

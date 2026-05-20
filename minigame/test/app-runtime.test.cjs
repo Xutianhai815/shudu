@@ -94,6 +94,23 @@ test('app runtime opens practice difficulty with a recommended training card and
   }
 });
 
+test('app runtime opens technique training directly from the home screen', () => {
+  const runtime = bootAppRuntime();
+
+  try {
+    const entry = runtime.latestMenuCall().layout.techniqueTrainingEntry;
+    assert.ok(entry);
+
+    runtime.touch(entry.x + entry.width / 2, entry.y + entry.height / 2);
+
+    assert.ok(runtime.latestTechniqueMenuCall());
+    assert.match(runtime.drawnText(), /技巧训练/);
+    assert.match(runtime.drawnText(), /初阶技巧/);
+  } finally {
+    runtime.restore();
+  }
+});
+
 test('app runtime starts the recommended training source difficulty', () => {
   const runtime = bootAppRuntime({
     initialProgress: {

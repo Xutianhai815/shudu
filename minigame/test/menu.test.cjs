@@ -328,6 +328,46 @@ test('brain greenhouse layout keeps hero and controls inside common portrait vie
   });
 });
 
+test('createMenuLayout adds a low emphasis technique training entry below primary modes', () => {
+  const layout = createMenuLayout(430, 932, levels, {
+    hasActiveRun: true,
+    activeRun: { levelId: 'lab-02' },
+  });
+
+  assert.deepEqual(layout.techniqueTrainingEntry, {
+    x: (layout.width - 132) / 2,
+    y: layout.modeCards.practice.y + layout.modeCards.practice.height + 12,
+    width: 132,
+    height: 30,
+    action: 'techniqueTraining',
+    label: '技巧训练',
+    helperText: null,
+    emphasis: 'low',
+  });
+  assert.ok(layout.techniqueTrainingEntry.y > layout.modeCards.practice.y);
+  assert.ok(layout.techniqueTrainingEntry.y + layout.techniqueTrainingEntry.height <= layout.height - layout.margin);
+  assert.equal(layout.modeCards.campaign.title, '继续闯关');
+  assert.equal(layout.modeCards.practice.title, '自由练习');
+});
+
+test('createMenuLayout keeps technique training entry inside compact safe viewport', () => {
+  const layout = createMenuLayout(320, 568, levels, { topInset: 96 });
+
+  assert.ok(layout.techniqueTrainingEntry.y > layout.modeCards.practice.y);
+  assert.ok(layout.techniqueTrainingEntry.y + layout.techniqueTrainingEntry.height <= layout.height - layout.margin);
+  assert.equal(layout.techniqueTrainingEntry.emphasis, 'low');
+});
+
+test('hitTestMenu maps the homepage technique training entry', () => {
+  const layout = createMenuLayout(430, 932, levels);
+  const entry = layout.techniqueTrainingEntry;
+
+  assert.deepEqual(hitTestMenu(layout, entry.x + entry.width / 2, entry.y + entry.height / 2), {
+    type: 'menu',
+    action: 'techniqueTraining',
+  });
+});
+
 function assertHeroBoardMotionGap(layout) {
   const reserve = layout.compact
     ? MENU_HERO_MOTION_RESERVE.compact

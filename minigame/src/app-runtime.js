@@ -358,6 +358,11 @@ function handleMenuTouch(touch) {
     return;
   }
 
+  if (hit.action === 'techniqueTraining') {
+    openTechniqueMenu();
+    return;
+  }
+
   // Legacy actions are kept as a defensive fallback for older menu layouts.
   if (hit.action === 'continue' || hit.action === 'start') {
     startOrContinueCampaign();
@@ -414,6 +419,15 @@ function startOrContinuePractice() {
   render();
 }
 
+function openTechniqueMenu() {
+  currentMode = 'technique';
+  currentTrainingDifficulty = null;
+  scene = 'techniqueMenu';
+  stopMenuAnimation();
+  refreshTechniqueMenuLayout();
+  render();
+}
+
 function handlePracticeMenuTouch(touch) {
   const hit =
     practiceMenuLayout && hitTestPracticeMenu(practiceMenuLayout, touch.clientX, touch.clientY);
@@ -431,9 +445,7 @@ function handlePracticeMenuTouch(touch) {
   }
 
   if (hit.action === 'techniqueTraining') {
-    scene = 'techniqueMenu';
-    refreshTechniqueMenuLayout();
-    render();
+    openTechniqueMenu();
     return;
   }
 
