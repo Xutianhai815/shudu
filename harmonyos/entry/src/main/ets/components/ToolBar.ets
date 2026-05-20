@@ -3,8 +3,8 @@ type SimpleHandler = () => void;
 @Component
 export struct ToolBar {
   @Prop noteMode: boolean;
-  onToggleNoteMode: SimpleHandler = (): void => {};
-  onClear: SimpleHandler = (): void => {};
+  onToggleNote: SimpleHandler = (): void => {};
+  onErase: SimpleHandler = (): void => {};
   onRestart: SimpleHandler = (): void => {};
 
   private getNoteLabel(): string {
@@ -30,7 +30,7 @@ export struct ToolBar {
         .backgroundColor(this.getNoteBackground())
         .borderRadius(16)
         .onClick(() => {
-          this.onToggleNoteMode();
+          this.onToggleNote();
         })
 
       Button('清除')
@@ -42,7 +42,7 @@ export struct ToolBar {
         .backgroundColor('#E8D8BF')
         .borderRadius(16)
         .onClick(() => {
-          this.onClear();
+          this.onErase();
         })
 
       Button('重新开始')

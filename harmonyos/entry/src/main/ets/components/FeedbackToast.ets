@@ -1,10 +1,10 @@
 @Component
 export struct FeedbackToast {
-  @Prop message: string;
+  @Prop text: string;
 
   build() {
-    if (this.message.trim().length > 0) {
-      Text(this.message)
+    if (this.text.trim().length > 0) {
+      Text(this.text)
         .maxLines(2)
         .fontSize(14)
         .fontWeight(FontWeight.Medium)
