@@ -56,7 +56,7 @@ const TECHNIQUE_SPECS = deepFreeze(
           text: '这些范围里的数字会排除大部分候选。',
           highlightCells: [{ row: 0, col: 1 }, { row: 1, col: 0 }, { row: 2, col: 2 }],
           highlightUnits: [{ type: 'box', index: 0 }],
-          candidateHighlights: [{ row: 0, col: 2, digit: 1, tone: 'muted' }, { row: 0, col: 2, digit: 8, tone: 'muted' }],
+          candidateHighlights: [{ row: 0, col: 2, digit: 1, tone: 'muted' }, { row: 0, col: 2, digit: 2, tone: 'muted' }],
           targetVisible: true,
           inputEnabled: false,
         },
@@ -174,9 +174,9 @@ const TECHNIQUE_SPECS = deepFreeze(
           highlightUnits: [{ type: 'row', index: 1 }, { type: 'row', index: 6 }],
           candidateHighlights: [
             { row: 1, col: 1, digit: 3, tone: 'teal' },
-            { row: 1, col: 7, digit: 3, tone: 'teal' },
+            { row: 1, col: 6, digit: 3, tone: 'teal' },
             { row: 6, col: 1, digit: 3, tone: 'teal' },
-            { row: 6, col: 7, digit: 3, tone: 'teal' },
+            { row: 6, col: 6, digit: 3, tone: 'teal' },
           ],
         },
         {
@@ -184,10 +184,10 @@ const TECHNIQUE_SPECS = deepFreeze(
           text: '两行两列形成矩形后，同列其他 3 可以被排除。',
           shapeHighlights: [{
             type: 'rect',
-            cells: [{ row: 1, col: 1 }, { row: 1, col: 7 }, { row: 6, col: 1 }, { row: 6, col: 7 }],
+            cells: [{ row: 1, col: 1 }, { row: 1, col: 6 }, { row: 6, col: 1 }, { row: 6, col: 6 }],
             tone: 'amber',
           }],
-          candidateHighlights: [{ row: 4, col: 1, digit: 3, tone: 'muted' }],
+          candidateHighlights: [{ row: 3, col: 1, digit: 3, tone: 'muted' }],
         },
         {
           title: '回到目标格',
@@ -341,7 +341,7 @@ function createTechniqueSpec({ id, group, title, target, summary, prompt, succes
   const digit = solution[row][col];
 
   board[row][col] = 0;
-  const rawSteps = createDefaultSteps({ title, target: { row, col, digit }, group, prompt });
+  const rawSteps = createDefaultSteps({ title, target: { row, col, digit }, group, prompt, board });
   const sourceSteps = Array.isArray(steps) && steps.length ? steps : rawSteps;
   const normalizedSteps = sourceSteps.map((step, index) => createLessonStep(step, index, sourceSteps.length));
 
@@ -366,11 +366,11 @@ function createTechniqueSpec({ id, group, title, target, summary, prompt, succes
   };
 }
 
-function createDefaultSteps({ title, target, group, prompt }) {
+function createDefaultSteps({ title, target, group, prompt, board }) {
   const { row, col, digit } = target;
   const targetCell = { row, col };
   const relatedBox = Math.floor(row / 3) * 3 + Math.floor(col / 3);
-  const advancedDecorations = createAdvancedStepDecorations(title, row, col, digit);
+  const advancedDecorations = createAdvancedStepDecorations(title, targetCell, digit, board);
 
   if (group === 'advanced') {
     return [
@@ -449,7 +449,7 @@ function createLessonStep(step, index, total) {
     candidateHighlights: normalizeCandidateHighlights(step.candidateHighlights || []),
     shapeHighlights: normalizeShapeHighlights(step.shapeHighlights || []),
     targetVisible: step.targetVisible === true || index >= total - 2,
-    inputEnabled: step.inputEnabled === true || index === total - 1,
+    inputEnabled: index === total - 1,
   };
 }
 
@@ -494,32 +494,35 @@ function getPeerPreviewCells(row, col) {
   ].filter((cell) => cell.row !== row || cell.col !== col);
 }
 
-function createAdvancedStepDecorations(title, row, col, digit) {
-  const targetCell = { row, col };
-  const rowA = Math.max(0, row);
-  const rowB = Math.min(8, row + 4);
-  const colA = Math.max(0, col);
-  const colB = Math.min(8, col + 4);
-  const anchorCells = [targetCell, { row: rowA, col: colA }, { row: rowA, col: colB }, { row: rowB, col: colA }, { row: rowB, col: colB }];
+function createAdvancedStepDecorations(title, targetCell, digit, board) {
+  const teachingCells = getEmptyTeachingCells(board, targetCell, 6);
+  const anchorCells = teachingCells.slice(0, 5);
+  const shapeCells = anchorCells.slice(1);
+  const removalCell = teachingCells[5] || anchorCells[1] || targetCell;
   const candidates = anchorCells.slice(1).map((cell) => ({ ...cell, digit, tone: 'teal' }));
-  const removals = [{ row: Math.min(8, row + 2), col: colA, digit, tone: 'muted' }];
+  const removals = [{ ...removalCell, digit, tone: 'muted' }];
+  const targetBox = Math.floor(targetCell.row / 3) * 3 + Math.floor(targetCell.col / 3);
 
   if (title.includes('剑鱼')) {
     return {
       anchorCells,
-      removeCells: [{ row: Math.min(8, row + 2), col: colA }],
-      units: [{ type: 'row', index: rowA }, { type: 'row', index: Math.min(8, rowA + 3) }, { type: 'row', index: rowB }],
+      removeCells: [removalCell],
+      units: [
+        { type: 'row', index: shapeCells[0].row },
+        { type: 'row', index: shapeCells[1].row },
+        { type: 'row', index: shapeCells[2].row },
+      ],
       candidates,
       removals,
-      shapes: [{ type: 'polyline', cells: anchorCells.slice(1), tone: 'amber' }],
+      shapes: [{ type: 'polyline', cells: shapeCells, tone: 'amber' }],
     };
   }
 
   if (title.includes('XY')) {
     return {
       anchorCells,
-      removeCells: [{ row: Math.min(8, row + 1), col: Math.min(8, col + 1) }],
-      units: [{ type: 'box', index: Math.floor(row / 3) * 3 + Math.floor(col / 3) }],
+      removeCells: [removalCell],
+      units: [{ type: 'box', index: targetBox }],
       candidates,
       removals,
       shapes: [{ type: 'chain', cells: anchorCells.slice(0, 4), tone: 'teal' }],
@@ -528,12 +531,33 @@ function createAdvancedStepDecorations(title, row, col, digit) {
 
   return {
     anchorCells,
-    removeCells: [{ row: Math.min(8, row + 2), col: colA }],
-    units: [{ type: 'row', index: rowA }, { type: 'row', index: rowB }, { type: 'col', index: colA }, { type: 'col', index: colB }],
+    removeCells: [removalCell],
+    units: [
+      { type: 'row', index: shapeCells[0].row },
+      { type: 'row', index: shapeCells[shapeCells.length - 1].row },
+      { type: 'col', index: shapeCells[0].col },
+      { type: 'col', index: shapeCells[shapeCells.length - 1].col },
+    ],
     candidates,
     removals,
-    shapes: [{ type: 'rect', cells: anchorCells.slice(1), tone: 'amber' }],
+    shapes: [{ type: 'rect', cells: shapeCells, tone: 'amber' }],
   };
+}
+
+function getEmptyTeachingCells(board, targetCell, count) {
+  const cells = [targetCell];
+
+  for (let row = 0; row < 9 && cells.length < count; row += 1) {
+    for (let col = 0; col < 9 && cells.length < count; col += 1) {
+      const isTarget = row === targetCell.row && col === targetCell.col;
+
+      if (!isTarget && board[row][col] === 0) {
+        cells.push({ row, col });
+      }
+    }
+  }
+
+  return cells;
 }
 
 function parseGrid(value) {

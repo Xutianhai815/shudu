@@ -56,6 +56,20 @@ function assertNoPressureFields(value) {
   assert.equal(Object.hasOwn(value, 'score'), false);
 }
 
+function assertBoardTeachingCell(technique, cell, context) {
+  assert.ok(cell.row >= 0 && cell.row <= 8, `${context} row out of bounds`);
+  assert.ok(cell.col >= 0 && cell.col <= 8, `${context} col out of bounds`);
+
+  const target = technique.lesson.target;
+  const isTarget = cell.row === target.row && cell.col === target.col;
+
+  assert.equal(
+    technique.lesson.board[cell.row][cell.col] === 0 || isTarget,
+    true,
+    `${context} must point to an empty board cell or the target cell`,
+  );
+}
+
 test('TECHNIQUE_GROUPS exposes basic and advanced group ids', () => {
   assert.deepEqual(
     TECHNIQUE_GROUPS.map((group) => group.id),
@@ -215,6 +229,54 @@ test('each technique lesson exposes three or four guided observation steps', () 
   const singleCandidate = getTechniqueById('single-candidate');
   assert.equal(singleCandidate.lesson.steps[0].targetVisible, true);
   assert.equal(singleCandidate.lesson.steps[1].targetVisible, true);
+});
+
+test('technique candidate and shape teaching data stays on valid open cells', () => {
+  getTechniques().forEach((technique) => {
+    const target = technique.lesson.target;
+    const finalStepIndex = technique.lesson.steps.length - 1;
+
+    technique.lesson.steps.forEach((step, stepIndex) => {
+      step.candidateHighlights.forEach((candidate, candidateIndex) => {
+        const context = `${technique.id} step ${stepIndex} candidate ${candidateIndex}`;
+
+        assertBoardTeachingCell(technique, candidate, context);
+        assert.ok(candidate.digit >= 1 && candidate.digit <= 9, `${context} digit out of bounds`);
+
+        if (
+          stepIndex === finalStepIndex &&
+          candidate.tone === 'amber' &&
+          candidate.row === target.row &&
+          candidate.col === target.col
+        ) {
+          assert.equal(candidate.digit, target.digit, `${context} target amber candidate must match answer`);
+        }
+      });
+
+      step.shapeHighlights.forEach((shape, shapeIndex) => {
+        shape.cells.forEach((cell, cellIndex) => {
+          assertBoardTeachingCell(technique, cell, `${technique.id} step ${stepIndex} shape ${shapeIndex} cell ${cellIndex}`);
+        });
+      });
+    });
+  });
+});
+
+test('single-candidate muted candidates do not hide the final answer before the final step', () => {
+  const technique = getTechniqueById('single-candidate');
+  const finalStepIndex = technique.lesson.steps.length - 1;
+
+  technique.lesson.steps.slice(0, finalStepIndex).forEach((step, stepIndex) => {
+    step.candidateHighlights
+      .filter((candidate) => candidate.tone === 'muted')
+      .forEach((candidate, candidateIndex) => {
+        assert.notEqual(
+          candidate.digit,
+          technique.lesson.target.digit,
+          `single-candidate step ${stepIndex} muted candidate ${candidateIndex} should not be target digit`,
+        );
+      });
+  });
 });
 
 test('basic technique lessons no longer look like one-empty-cell puzzles', () => {
