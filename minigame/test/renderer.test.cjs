@@ -5,8 +5,10 @@ const { createLayout } = require('../src/layout');
 const { levels } = require('../src/levels');
 const { createMenuLayout } = require('../src/menu');
 const { createPracticeMenuLayout } = require('../src/practice-menu');
+const { createTechniqueMenuLayout } = require('../src/technique-menu');
+const { getTechniqueGroups, getTechniques } = require('../src/technique-training');
 const { applyDigit, createPuzzleState, selectCell } = require('../src/puzzle');
-const { renderGame, renderMenu, renderPracticeMenu } = require('../src/renderer');
+const { renderGame, renderMenu, renderPracticeMenu, renderTechniqueMenu } = require('../src/renderer');
 const { createCompletionFeedback } = require('../src/derust');
 
 test('renderer draws the first level without a browser or WeChat canvas', () => {
@@ -789,6 +791,34 @@ test('renderer draws the free training difficulty menu copy', () => {
   assert.match(text, /长局专注，不急着快。/);
   assert.equal((text.match(/推荐：稳定/g) || []).length, 1);
   assert.equal(text.includes('undefined'), false);
+});
+
+test('renderer draws the technique training entry on the practice menu', () => {
+  const ctx = createMockCanvasContext();
+  const layout = createPracticeMenuLayout(430, 932, levels, {
+    recommendedTrainingDifficulty: 'steady',
+  });
+
+  renderPracticeMenu(ctx, layout);
+
+  const text = getDrawnText(ctx);
+  assert.match(text, /技巧训练/);
+  assert.match(text, /不会从哪看起？试试技巧训练。/);
+});
+
+test('renderer draws the technique training directory without pressure copy', () => {
+  const ctx = createMockCanvasContext();
+  const layout = createTechniqueMenuLayout(430, 932, getTechniqueGroups(), getTechniques());
+
+  renderTechniqueMenu(ctx, layout);
+
+  const text = getDrawnText(ctx);
+  assert.match(text, /技巧训练/);
+  assert.match(text, /初阶技巧/);
+  assert.match(text, /进阶技巧/);
+  assert.match(text, /唯一空格/);
+  assert.match(text, /X-Wing/);
+  assert.equal(/已掌握|完成率|正确率|学习失败|等级不足/.test(text), false);
 });
 
 test('renderer marks unavailable free training difficulties as closed', () => {

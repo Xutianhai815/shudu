@@ -63,7 +63,21 @@ function renderPracticeMenu(ctx, layout) {
     drawMenuBackground(ctx, layout);
     drawMenuAmbientParticles(ctx, layout);
     drawPracticeMenuHeader(ctx, layout);
+    drawPracticeTechniqueEntry(ctx, layout);
     drawPracticeDifficultyCards(ctx, layout);
+  } finally {
+    ctx.restore();
+  }
+}
+
+function renderTechniqueMenu(ctx, layout) {
+  ctx.save();
+  try {
+    clear(ctx, layout.width, layout.height);
+    drawMenuBackground(ctx, layout);
+    drawMenuAmbientParticles(ctx, layout);
+    drawTechniqueMenuHeader(ctx, layout);
+    drawTechniqueGroups(ctx, layout);
   } finally {
     ctx.restore();
   }
@@ -437,6 +451,113 @@ function drawPracticeDifficultyCards(ctx, layout) {
 
   ctx.textAlign = 'left';
   ctx.textBaseline = 'alphabetic';
+}
+
+function drawPracticeTechniqueEntry(ctx, layout) {
+  const button = layout.techniqueTrainingButton;
+
+  if (!button) {
+    return;
+  }
+
+  roundRect(ctx, button.x, button.y, button.width, button.height, button.height / 2, 'rgba(24, 33, 31, 0.9)');
+  ctx.fillStyle = '#ffffff';
+  setFont(ctx, layout, layout.compact ? '900 13px sans-serif' : '900 14px sans-serif');
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(button.label, button.x + button.width / 2, button.y + button.height / 2 + 0.5);
+
+  if (button.helperText) {
+    ctx.fillStyle = 'rgba(24, 33, 31, 0.58)';
+    setFont(ctx, layout, layout.compact ? '800 11px sans-serif' : '800 12px sans-serif');
+    ctx.textAlign = 'left';
+    ctx.fillText(button.helperText, button.x + button.width + 10, button.y + button.height / 2 + 4);
+  }
+
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'alphabetic';
+}
+
+function drawTechniqueMenuHeader(ctx, layout) {
+  const back = layout.backButton;
+
+  if (back) {
+    roundRect(ctx, back.x, back.y, back.width, back.height, back.height / 2, 'rgba(255, 255, 255, 0.72)');
+    ctx.fillStyle = '#18211f';
+    setFont(ctx, layout, '900 14px sans-serif');
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(back.label || '返回', back.x + back.width / 2, back.y + back.height / 2 + 0.5);
+  }
+
+  if (layout.title) {
+    ctx.fillStyle = '#18211f';
+    setFont(ctx, layout, layout.compact ? '900 32px sans-serif' : '900 40px sans-serif');
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'alphabetic';
+    ctx.fillText(layout.title.text, layout.title.x, layout.title.y);
+  }
+
+  if (layout.subtitle) {
+    ctx.fillStyle = 'rgba(24, 33, 31, 0.62)';
+    setFont(ctx, layout, layout.compact ? '850 13px sans-serif' : '850 15px sans-serif');
+    ctx.fillText(layout.subtitle.text, layout.subtitle.x, layout.subtitle.y);
+  }
+
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'alphabetic';
+}
+
+function drawTechniqueGroups(ctx, layout) {
+  const groups = Array.isArray(layout.groups) ? layout.groups : [];
+  const cards = Array.isArray(layout.techniqueCards) ? layout.techniqueCards : [];
+
+  groups.forEach((group, groupIndex) => {
+    const railColor = groupIndex === 0 ? '#16a3a0' : '#d79b27';
+
+    ctx.fillStyle = '#18211f';
+    setFont(ctx, layout, layout.compact ? '900 18px sans-serif' : '900 20px sans-serif');
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'alphabetic';
+    ctx.fillText(group.title, group.x, group.y + (layout.compact ? 22 : 26));
+
+    if (group.subtitle) {
+      ctx.fillStyle = 'rgba(24, 33, 31, 0.52)';
+      setFont(ctx, layout, layout.compact ? '800 10px sans-serif' : '800 11px sans-serif');
+      ctx.fillText(group.subtitle, group.x + 94, group.y + (layout.compact ? 21 : 25));
+    }
+
+    cards
+      .filter((card) => card.group === group.id)
+      .forEach((card) => drawTechniqueCard(ctx, layout, card, railColor));
+  });
+
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'alphabetic';
+}
+
+function drawTechniqueCard(ctx, layout, card, railColor) {
+  roundRect(ctx, card.x, card.y, card.width, card.height, 18, 'rgba(255, 255, 255, 0.78)');
+  ctx.fillStyle = railColor;
+  roundRect(ctx, card.x + 10, card.y + 12, 5, card.height - 24, 3, railColor);
+
+  ctx.fillStyle = '#18211f';
+  setFont(ctx, layout, layout.compact ? '900 15px sans-serif' : '900 17px sans-serif');
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'alphabetic';
+  ctx.fillText(card.title, card.x + 24, card.y + (layout.compact ? 22 : 25));
+
+  ctx.fillStyle = 'rgba(24, 33, 31, 0.56)';
+  setFont(ctx, layout, layout.compact ? '800 9px sans-serif' : '800 10px sans-serif');
+  wrapText(ctx, card.summary, card.x + 24, card.y + (layout.compact ? 40 : 44), card.width - 42, layout.compact ? 12 : 13);
+
+  ctx.fillStyle = 'rgba(8, 116, 113, 0.82)';
+  setFont(ctx, layout, layout.compact ? '900 10px sans-serif' : '900 11px sans-serif');
+  ctx.textAlign = 'right';
+  ctx.textBaseline = 'alphabetic';
+  ctx.fillText(card.buttonLabel, card.x + card.width - 14, card.y + card.height - 10);
+
+  ctx.textAlign = 'left';
 }
 
 function getPracticeRailColor(index) {
@@ -1121,4 +1242,5 @@ module.exports = {
   renderGame,
   renderMenu,
   renderPracticeMenu,
+  renderTechniqueMenu,
 };
