@@ -72,6 +72,32 @@ test('createTechniqueMenuLayout keeps every technique card inside a compact 375x
   assertCardsStayWithinViewport(layout);
 });
 
+test('createTechniqueMenuLayout keeps every technique card inside an ultra compact 320x568 viewport', () => {
+  const layout = createTechniqueMenuLayout(320, 568, getTechniqueGroups(), getTechniques(), {
+    topInset: 0,
+  });
+
+  assertCardsStayWithinViewport(layout);
+});
+
+test('createTechniqueMenuLayout keeps every technique card inside an ultra compact 320x568 viewport with medium top inset', () => {
+  const layout = createTechniqueMenuLayout(320, 568, getTechniqueGroups(), getTechniques(), {
+    topInset: 70,
+  });
+
+  assert.ok(layout.backButton.y >= 70);
+  assertCardsStayWithinViewport(layout);
+});
+
+test('createTechniqueMenuLayout keeps every technique card inside an ultra compact 320x568 viewport with large top inset', () => {
+  const layout = createTechniqueMenuLayout(320, 568, getTechniqueGroups(), getTechniques(), {
+    topInset: 96,
+  });
+
+  assert.ok(layout.backButton.y >= 96);
+  assertCardsStayWithinViewport(layout);
+});
+
 test('hitTestTechniqueMenu maps back and technique cards', () => {
   const layout = createTechniqueMenuLayout(430, 932, getTechniqueGroups(), getTechniques());
   const back = layout.backButton;
@@ -100,6 +126,7 @@ test('hitTestTechniqueMenu ignores outside taps and missing layouts', () => {
 
 function assertCardsStayWithinViewport(layout) {
   layout.techniqueCards.forEach((card) => {
+    assert.ok(card.height >= 32, `${card.id} height ${card.height} is too small`);
     assert.ok(
       card.y + card.height <= layout.height - layout.margin,
       `${card.id} bottom ${card.y + card.height} exceeds ${layout.height - layout.margin}`,

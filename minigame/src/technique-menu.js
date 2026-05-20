@@ -6,6 +6,7 @@ const TECHNIQUE_AMBIENT_PARTICLES = Object.freeze([
 
 function createTechniqueMenuLayout(width, height, groups, techniques, options = {}) {
   const compact = height < 700;
+  const ultraCompact = compact && (width <= 340 || height <= 600);
   const margin = compact ? 18 : 22;
   const topY = Math.max(compact ? 28 : 54, normalizeTopInset(options.topInset, height));
   const backButton = {
@@ -15,12 +16,12 @@ function createTechniqueMenuLayout(width, height, groups, techniques, options = 
     height: compact ? 34 : 38,
     label: '返回',
   };
-  const titleY = backButton.y + backButton.height + (compact ? 22 : 34);
-  const subtitleY = titleY + (compact ? 28 : 34);
+  const titleY = backButton.y + backButton.height + (ultraCompact ? 16 : compact ? 22 : 34);
+  const subtitleY = titleY + (ultraCompact ? 24 : compact ? 28 : 34);
   const columnGap = compact ? 8 : 10;
-  const groupGap = compact ? 8 : 16;
-  const cardGap = compact ? 6 : 10;
-  const groupHeaderHeight = compact ? 30 : 42;
+  const groupGap = ultraCompact ? 4 : compact ? 8 : 16;
+  const cardGap = ultraCompact ? 4 : compact ? 6 : 10;
+  const groupHeaderHeight = ultraCompact ? 26 : compact ? 30 : 42;
   const cardWidth = (width - margin * 2 - columnGap) / 2;
   const groupList = normalizeGroups(groups);
   const techniqueList = normalizeTechniques(techniques);
@@ -29,7 +30,7 @@ function createTechniqueMenuLayout(width, height, groups, techniques, options = 
 
     return sum + Math.ceil(count / 2);
   }, 0);
-  const contentStartY = subtitleY + (compact ? 18 : 34);
+  const contentStartY = subtitleY + (ultraCompact ? 12 : compact ? 18 : 34);
   const availableCardArea =
     height -
     margin -
@@ -38,8 +39,8 @@ function createTechniqueMenuLayout(width, height, groups, techniques, options = 
     groupGap * Math.max(0, groupList.length - 1) -
     cardGap * Math.max(0, rowCount - groupList.length);
   const cardHeight = Math.max(
-    compact ? 40 : 52,
-    Math.min(compact ? 52 : 66, availableCardArea / Math.max(1, rowCount)),
+    ultraCompact ? 32 : compact ? 40 : 52,
+    Math.min(ultraCompact ? 40 : compact ? 52 : 66, availableCardArea / Math.max(1, rowCount)),
   );
   const laidOutGroups = [];
   const techniqueCards = [];
@@ -76,6 +77,7 @@ function createTechniqueMenuLayout(width, height, groups, techniques, options = 
         difficultyLabel: group.title,
         buttonLabel: '开始练习',
         showSummary: !compact,
+        showButtonLabel: !ultraCompact,
       });
     });
 
@@ -91,6 +93,7 @@ function createTechniqueMenuLayout(width, height, groups, techniques, options = 
     height,
     margin,
     compact,
+    ultraCompact,
     backButton,
     title: {
       x: margin,

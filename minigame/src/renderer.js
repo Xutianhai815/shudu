@@ -553,11 +553,13 @@ function drawTechniqueCard(ctx, layout, card, railColor) {
     wrapText(ctx, card.summary, card.x + 24, card.y + (layout.compact ? 40 : 44), card.width - 42, layout.compact ? 12 : 13);
   }
 
-  ctx.fillStyle = 'rgba(8, 116, 113, 0.82)';
-  setFont(ctx, layout, layout.compact ? '900 10px sans-serif' : '900 11px sans-serif');
-  ctx.textAlign = 'right';
-  ctx.textBaseline = 'alphabetic';
-  ctx.fillText(card.buttonLabel, card.x + card.width - 14, card.y + card.height - 10);
+  if (card.showButtonLabel !== false) {
+    ctx.fillStyle = 'rgba(8, 116, 113, 0.82)';
+    setFont(ctx, layout, layout.compact ? '900 10px sans-serif' : '900 11px sans-serif');
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'alphabetic';
+    ctx.fillText(card.buttonLabel, card.x + card.width - 14, card.y + card.height - 10);
+  }
 
   ctx.textAlign = 'left';
 }
