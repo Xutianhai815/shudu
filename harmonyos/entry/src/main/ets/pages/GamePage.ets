@@ -8,16 +8,18 @@ import { levels } from '../game/levels';
 import { choosePracticeLevel } from '../game/modes';
 import {
   applyDigit,
+  createPuzzleSnapshot,
   createPuzzleState,
+  createPuzzleStateFromSnapshot,
   eraseSelected,
   restartLevel,
   selectCell,
   toggleNoteMode,
 } from '../game/puzzle';
-import { PuzzleState, TrainingDifficulty } from '../game/types';
-import { createEmptyProgress } from '../game/progress';
+import { PuzzleState, SudokuLevel, TrainingDifficulty } from '../game/types';
+import { AppProgress, SavedRun } from '../game/progress';
 import { playSound } from '../services/sound';
-import { saveProgress } from '../services/storage';
+import { loadProgress, saveProgress } from '../services/storage';
 import {
   ACCENT_BROWN,
   GAME_BOTTOM_PADDING,
@@ -39,6 +41,8 @@ interface GamePageParams {
 struct GamePage {
   @State puzzle: PuzzleState = createPuzzleState(levels[0]);
   @State feedbackText: string = '先选择一个空格，再填入数字。';
+  private activeMode: 'campaign' | 'practice' = 'campaign';
+  private activeTrainingDifficulty: TrainingDifficulty | null = null;
 
   private normalizeTrainingDifficulty(value?: TrainingDifficulty): TrainingDifficulty {
     if (value === 'steady' || value === 'standard' || value === 'advanced') {
@@ -50,32 +54,153 @@ struct GamePage {
 
   aboutToAppear(): void {
     const params = (router.getParams() ?? {}) as GamePageParams;
-    const mode = params.mode ?? 'campaign';
+    const mode = params.mode === 'practice' ? 'practice' : 'campaign';
     const trainingDifficulty = this.normalizeTrainingDifficulty(params.trainingDifficulty);
+    this.activeMode = mode;
+    this.activeTrainingDifficulty = mode === 'practice' ? trainingDifficulty : null;
     const activeLevel = mode === 'practice'
       ? choosePracticeLevel(levels, trainingDifficulty, null) ?? levels[0]
       : levels[0];
 
     this.puzzle = createPuzzleState(activeLevel);
     this.feedbackText = mode === 'practice' ? '自由练习已开始，慢慢推理。' : '闯关挑战已开始。';
+    this.restoreActiveRun();
+  }
+
+  private findLevel(levelId: string): SudokuLevel | null {
+    for (let index = 0; index < levels.length; index += 1) {
+      if (levels[index].id === levelId) {
+        return levels[index];
+      }
+    }
+    return null;
+  }
+
+  private getTodayKey(): string {
+    const date = new Date();
+    const month = `${date.getMonth() + 1}`.padStart(2, '0');
+    const day = `${date.getDate()}`.padStart(2, '0');
+    return `${date.getFullYear()}-${month}-${day}`;
+  }
+
+  private createCurrentRun(): SavedRun {
+    const run: SavedRun = {
+      mode: this.activeMode,
+      levelId: this.puzzle.level.id,
+      trainingDifficulty: this.activeTrainingDifficulty,
+      snapshot: createPuzzleSnapshot(this.puzzle),
+    };
+    return run;
+  }
+
+  private restoreActiveRun(): void {
+    loadProgress().then((progress: AppProgress) => {
+      const savedRun = this.activeMode === 'practice' ? progress.practiceRun : progress.campaignRun;
+      if (!savedRun || savedRun.mode !== this.activeMode) {
+        return;
+      }
+
+      if (this.activeMode === 'practice' && savedRun.trainingDifficulty !== this.activeTrainingDifficulty) {
+        return;
+      }
+
+      const savedLevel = this.findLevel(savedRun.levelId);
+      if (!savedLevel) {
+        return;
+      }
+
+      const restoredPuzzle = createPuzzleStateFromSnapshot(savedLevel, savedRun.snapshot);
+      if (!restoredPuzzle || restoredPuzzle.completed) {
+        return;
+      }
+
+      this.puzzle = restoredPuzzle;
+      this.feedbackText = this.activeMode === 'practice' ? '已恢复上次自由练习。' : '已恢复上次闯关进度。';
+    }).catch(() => {
+    });
+  }
+
+  private persistActiveRun(): void {
+    if (this.puzzle.completed) {
+      return;
+    }
+
+    const run = this.createCurrentRun();
+    loadProgress().then((progress: AppProgress) => {
+      if (run.mode === 'practice') {
+        progress.practiceRun = run;
+      } else {
+        progress.campaignRun = run;
+      }
+      return saveProgress(progress);
+    }).catch(() => {
+    });
+  }
+
+  private recordRecentPracticeLevel(progress: AppProgress, completedLevelId: string): void {
+    if (this.activeTrainingDifficulty === 'warmup') {
+      progress.practiceStats.recentLevelIdsByTrainingDifficulty.warmup = completedLevelId;
+      return;
+    }
+
+    if (this.activeTrainingDifficulty === 'steady') {
+      progress.practiceStats.recentLevelIdsByTrainingDifficulty.steady = completedLevelId;
+      return;
+    }
+
+    if (this.activeTrainingDifficulty === 'standard') {
+      progress.practiceStats.recentLevelIdsByTrainingDifficulty.standard = completedLevelId;
+      return;
+    }
+
+    if (this.activeTrainingDifficulty === 'advanced') {
+      progress.practiceStats.recentLevelIdsByTrainingDifficulty.advanced = completedLevelId;
+    }
+  }
+
+  private recordCompletion(): void {
+    const completedLevelId = this.puzzle.level.id;
+    loadProgress().then((progress: AppProgress) => {
+      if (progress.completedLevelIds.indexOf(completedLevelId) < 0) {
+        progress.completedLevelIds.push(completedLevelId);
+      }
+
+      if (this.activeMode === 'practice') {
+        progress.practiceRun = null;
+        progress.practiceStats.totalCompleted += 1;
+        progress.practiceStats.lastTrainingDifficulty = this.activeTrainingDifficulty;
+        this.recordRecentPracticeLevel(progress, completedLevelId);
+      } else {
+        progress.campaignRun = null;
+      }
+
+      progress.growthStats.totalCompleted += 1;
+      progress.growthStats.streakDays = Math.max(1, progress.growthStats.streakDays);
+      progress.growthStats.lastPlayedDate = this.getTodayKey();
+      return saveProgress(progress);
+    }).catch(() => {
+    });
   }
 
   private handleSelect(row: number, col: number): void {
     this.puzzle = selectCell(this.puzzle, row, col);
     this.feedbackText = '已选中格子。';
     playSound('select');
+    this.persistActiveRun();
   }
 
   private handleToggleNote(): void {
     this.puzzle = toggleNoteMode(this.puzzle);
     this.feedbackText = this.puzzle.noteMode ? '草稿模式已开启。' : '正式填数模式已开启。';
     playSound('tool');
+    this.persistActiveRun();
   }
 
   private handleErase(): void {
     this.puzzle = eraseSelected(this.puzzle);
     this.feedbackText = '已清除当前格。';
     playSound('tool');
+    this.persistActiveRun();
   }
 
   private handleRestart(): void {
@@ -100,6 +225,7 @@ struct GamePage {
       this.puzzle = restartLevel(this.puzzle);
       this.feedbackText = '本局已重新开始。';
       playSound('tool');
+      this.persistActiveRun();
     }).catch(() => {
     });
   }
@@ -123,14 +249,12 @@ struct GamePage {
     if (!wasCompleted && this.puzzle.completed) {
       this.feedbackText = '完成了，准备查看反馈。';
       playSound('complete');
-      const progress = createEmptyProgress();
-      progress.completedLevelIds = [this.puzzle.level.id];
-      progress.growthStats.totalCompleted = 1;
-      progress.growthStats.streakDays = 1;
-      saveProgress(progress).catch(() => {
-      });
+      this.recordCompletion();
       router.replaceUrl({ url: 'pages/VictoryPage' });
+      return;
     }
+
+    this.persistActiveRun();
   }
 
   build() {

@@ -124,6 +124,20 @@ function cloneStateWithCells(state: PuzzleState, cells: SudokuCell[][], complete
   return nextState;
 }
 
+function isValidSnapshotCells(cells: SudokuCell[][]): boolean {
+  if (!Array.isArray(cells) || cells.length !== 9) {
+    return false;
+  }
+
+  for (let row = 0; row < 9; row += 1) {
+    if (!Array.isArray(cells[row]) || cells[row].length !== 9) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
 export function createPuzzleState(level?: SudokuLevel): PuzzleState {
   const activeLevel = level ? level : levels[0];
   const selected = findInitialSelected(activeLevel.givens);
@@ -139,6 +153,64 @@ export function createPuzzleState(level?: SudokuLevel): PuzzleState {
   };
 
   return state;
+}
+
+export function createPuzzleSnapshot(state: PuzzleState): PuzzleSnapshot {
+  const snapshot: PuzzleSnapshot = {
+    selected: createPosition(state.selected.row, state.selected.col),
+    noteMode: state.noteMode,
+    completed: state.completed,
+    cells: cloneCells(state.cells),
+  };
+  return snapshot;
+}
+
+export function createPuzzleStateFromSnapshot(level: SudokuLevel, snapshot: PuzzleSnapshot): PuzzleState | null {
+  if (!snapshot || !isGridIndex(snapshot.selected.row) || !isGridIndex(snapshot.selected.col) || !isValidSnapshotCells(snapshot.cells)) {
+    return null;
+  }
+
+  const baseState = createPuzzleState(level);
+  const cells = cloneCells(baseState.cells);
+
+  for (let row = 0; row < 9; row += 1) {
+    for (let col = 0; col < 9; col += 1) {
+      const baseCell = cells[row][col];
+      const savedCell = snapshot.cells[row][col];
+
+      if (baseCell.fixed) {
+        continue;
+      }
+
+      if (Number.isInteger(savedCell.value) && savedCell.value >= 0 && savedCell.value <= 9) {
+        baseCell.value = savedCell.value;
+      }
+
+      if (Array.isArray(savedCell.notes)) {
+        const notes: number[] = [];
+        for (let index = 0; index < savedCell.notes.length; index += 1) {
+          const note = savedCell.notes[index];
+          if (Number.isInteger(note) && note >= 1 && note <= 9 && notes.indexOf(note) < 0) {
+            notes.push(note);
+          }
+        }
+        notes.sort((left: number, right: number) => left - right);
+        baseCell.notes = notes;
+      }
+    }
+  }
+
+  const restoredState: PuzzleState = {
+    level: level,
+    solution: level.solution,
+    selected: createPosition(snapshot.selected.row, snapshot.selected.col),
+    noteMode: snapshot.noteMode === true,
+    completed: false,
+    history: [],
+    cells: cells,
+  };
+  restoredState.completed = isSolved(restoredState);
+  return restoredState;
 }
 
 export function selectCell(state: PuzzleState, row: number, col: number): PuzzleState {
