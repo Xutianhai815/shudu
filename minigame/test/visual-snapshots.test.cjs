@@ -28,7 +28,7 @@ test('visual snapshot renderer produces key menu gameplay and victory SVGs', () 
   assert.equal(PRESSURE_COPY_PATTERN.test(snapshots.techniqueMenu), false);
   assert.match(snapshots.techniqueLesson, /唯一候选/);
   assert.match(snapshots.techniqueLesson, /1\/4/);
-  assert.match(snapshots.techniqueLesson, /下一步|现在填数/);
+  assert.match(snapshots.techniqueLesson, /下一步/);
   assert.equal(/草稿模式|重开|清除/.test(snapshots.techniqueLesson), false);
   assert.doesNotMatch(snapshots.techniqueLesson, /看提示/);
   assert.equal(PRESSURE_COPY_PATTERN.test(snapshots.techniqueLesson), false);
