@@ -70,6 +70,31 @@ function assertBoardTeachingCell(technique, cell, context) {
   );
 }
 
+function isLegalCandidate(board, row, col, digit) {
+  if (board[row][col] !== 0) {
+    return false;
+  }
+
+  for (let index = 0; index < 9; index += 1) {
+    if (board[row][index] === digit || board[index][col] === digit) {
+      return false;
+    }
+  }
+
+  const boxRow = Math.floor(row / 3) * 3;
+  const boxCol = Math.floor(col / 3) * 3;
+
+  for (let rowOffset = 0; rowOffset < 3; rowOffset += 1) {
+    for (let colOffset = 0; colOffset < 3; colOffset += 1) {
+      if (board[boxRow + rowOffset][boxCol + colOffset] === digit) {
+        return false;
+      }
+    }
+  }
+
+  return true;
+}
+
 test('TECHNIQUE_GROUPS exposes basic and advanced group ids', () => {
   assert.deepEqual(
     TECHNIQUE_GROUPS.map((group) => group.id),
@@ -242,6 +267,11 @@ test('technique candidate and shape teaching data stays on valid open cells', ()
 
         assertBoardTeachingCell(technique, candidate, context);
         assert.ok(candidate.digit >= 1 && candidate.digit <= 9, `${context} digit out of bounds`);
+        assert.equal(
+          isLegalCandidate(technique.lesson.board, candidate.row, candidate.col, candidate.digit),
+          true,
+          `${context} must be a legal Sudoku candidate`,
+        );
 
         if (
           stepIndex === finalStepIndex &&
@@ -258,6 +288,38 @@ test('technique candidate and shape teaching data stays on valid open cells', ()
           assertBoardTeachingCell(technique, cell, `${technique.id} step ${stepIndex} shape ${shapeIndex} cell ${cellIndex}`);
         });
       });
+    });
+
+    const finalStep = technique.lesson.steps[finalStepIndex];
+    const targetAmberCandidates = finalStep.candidateHighlights.filter(
+      (candidate) =>
+        candidate.tone === 'amber' &&
+        candidate.row === target.row &&
+        candidate.col === target.col,
+    );
+
+    assert.ok(targetAmberCandidates.length > 0, `${technique.id} final step needs an amber target candidate`);
+    targetAmberCandidates.forEach((candidate, candidateIndex) => {
+      assert.equal(
+        candidate.digit,
+        target.digit,
+        `${technique.id} final target amber candidate ${candidateIndex} must match answer`,
+      );
+    });
+  });
+});
+
+test('x-wing candidate highlights only show legal digit-3 candidates', () => {
+  const technique = getTechniqueById('x-wing');
+
+  technique.lesson.steps.forEach((step, stepIndex) => {
+    step.candidateHighlights.forEach((candidate, candidateIndex) => {
+      assert.equal(candidate.digit, 3, `x-wing step ${stepIndex} candidate ${candidateIndex} should teach digit 3`);
+      assert.equal(
+        isLegalCandidate(technique.lesson.board, candidate.row, candidate.col, candidate.digit),
+        true,
+        `x-wing step ${stepIndex} candidate ${candidateIndex} should be legal`,
+      );
     });
   });
 });

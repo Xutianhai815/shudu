@@ -56,7 +56,7 @@ const TECHNIQUE_SPECS = deepFreeze(
           text: '这些范围里的数字会排除大部分候选。',
           highlightCells: [{ row: 0, col: 1 }, { row: 1, col: 0 }, { row: 2, col: 2 }],
           highlightUnits: [{ type: 'box', index: 0 }],
-          candidateHighlights: [{ row: 0, col: 2, digit: 1, tone: 'muted' }, { row: 0, col: 2, digit: 2, tone: 'muted' }],
+          candidateHighlights: [{ row: 0, col: 2, digit: 1, tone: 'muted' }, { row: 0, col: 2, digit: 4, tone: 'muted' }],
           targetVisible: true,
           inputEnabled: false,
         },
@@ -171,12 +171,12 @@ const TECHNIQUE_SPECS = deepFreeze(
         {
           title: '找两行候选',
           text: '先看数字 3 在两行里是否只落在同两列。',
-          highlightUnits: [{ type: 'row', index: 1 }, { type: 'row', index: 6 }],
+          highlightUnits: [{ type: 'row', index: 1 }, { type: 'row', index: 4 }],
           candidateHighlights: [
-            { row: 1, col: 1, digit: 3, tone: 'teal' },
-            { row: 1, col: 6, digit: 3, tone: 'teal' },
-            { row: 6, col: 1, digit: 3, tone: 'teal' },
-            { row: 6, col: 6, digit: 3, tone: 'teal' },
+            { row: 1, col: 3, digit: 3, tone: 'teal' },
+            { row: 1, col: 4, digit: 3, tone: 'teal' },
+            { row: 4, col: 3, digit: 3, tone: 'teal' },
+            { row: 4, col: 4, digit: 3, tone: 'teal' },
           ],
         },
         {
@@ -184,21 +184,23 @@ const TECHNIQUE_SPECS = deepFreeze(
           text: '两行两列形成矩形后，同列其他 3 可以被排除。',
           shapeHighlights: [{
             type: 'rect',
-            cells: [{ row: 1, col: 1 }, { row: 1, col: 6 }, { row: 6, col: 1 }, { row: 6, col: 6 }],
+            cells: [{ row: 1, col: 3 }, { row: 1, col: 4 }, { row: 4, col: 3 }, { row: 4, col: 4 }],
             tone: 'amber',
           }],
-          candidateHighlights: [{ row: 3, col: 1, digit: 3, tone: 'muted' }],
+          candidateHighlights: [{ row: 5, col: 4, digit: 3, tone: 'muted' }],
         },
         {
           title: '回到目标格',
           text: '候选被排除后，目标格留下确定数字。',
           highlightCells: [{ row: 1, col: 3 }],
+          candidateHighlights: [{ row: 1, col: 3, digit: 3, tone: 'amber' }],
           targetVisible: true,
         },
         {
           title: '自己填一步',
           text: '填入目标数字，完成这次结构观察。',
           highlightCells: [{ row: 1, col: 3 }],
+          candidateHighlights: [{ row: 1, col: 3, digit: 3, tone: 'amber' }],
           targetVisible: true,
           inputEnabled: true,
         },
@@ -341,7 +343,7 @@ function createTechniqueSpec({ id, group, title, target, summary, prompt, succes
   const digit = solution[row][col];
 
   board[row][col] = 0;
-  const rawSteps = createDefaultSteps({ title, target: { row, col, digit }, group, prompt, board });
+  const rawSteps = createDefaultSteps({ title, target: { row, col, digit }, group, prompt, board, solution });
   const sourceSteps = Array.isArray(steps) && steps.length ? steps : rawSteps;
   const normalizedSteps = sourceSteps.map((step, index) => createLessonStep(step, index, sourceSteps.length));
 
@@ -366,11 +368,13 @@ function createTechniqueSpec({ id, group, title, target, summary, prompt, succes
   };
 }
 
-function createDefaultSteps({ title, target, group, prompt, board }) {
+function createDefaultSteps({ title, target, group, prompt, board, solution }) {
   const { row, col, digit } = target;
   const targetCell = { row, col };
   const relatedBox = Math.floor(row / 3) * 3 + Math.floor(col / 3);
-  const advancedDecorations = createAdvancedStepDecorations(title, targetCell, digit, board);
+  const advancedDecorations = createAdvancedStepDecorations(targetCell, board, solution);
+  const mutedDigit = getLegalCandidateDigits(board, row, col).find((candidateDigit) => candidateDigit !== digit);
+  const mutedCandidates = mutedDigit ? [{ row, col, digit: mutedDigit, tone: 'muted' }] : [];
 
   if (group === 'advanced') {
     return [
@@ -419,7 +423,7 @@ function createDefaultSteps({ title, target, group, prompt, board }) {
       text: '同一行、同一列和同一宫里已经出现的数字，都会压缩目标格的选择。',
       highlightCells: getPeerPreviewCells(row, col),
       highlightUnits: [{ type: 'box', index: relatedBox }],
-      candidateHighlights: [{ row, col, digit: ((digit + 2) % 9) + 1, tone: 'muted' }],
+      candidateHighlights: mutedCandidates,
       targetVisible: true,
     },
     {
@@ -494,70 +498,86 @@ function getPeerPreviewCells(row, col) {
   ].filter((cell) => cell.row !== row || cell.col !== col);
 }
 
-function createAdvancedStepDecorations(title, targetCell, digit, board) {
-  const teachingCells = getEmptyTeachingCells(board, targetCell, 6);
-  const anchorCells = teachingCells.slice(0, 5);
-  const shapeCells = anchorCells.slice(1);
-  const removalCell = teachingCells[5] || anchorCells[1] || targetCell;
-  const candidates = anchorCells.slice(1).map((cell) => ({ ...cell, digit, tone: 'teal' }));
-  const removals = [{ ...removalCell, digit, tone: 'muted' }];
+function createAdvancedStepDecorations(targetCell, board, solution) {
+  const teachingCandidates = getLegalTeachingCandidates(board, solution, targetCell, 6);
+  const anchorCells = teachingCandidates.slice(0, 5).map(({ row, col }) => ({ row, col }));
+  const removalCandidate = teachingCandidates[5] || teachingCandidates[1] || teachingCandidates[0];
+  const candidates = teachingCandidates
+    .slice(1, 5)
+    .map(({ row, col, digit }) => ({ row, col, digit, tone: 'teal' }));
+  const removals = removalCandidate ? [{ ...removalCandidate, tone: 'muted' }] : [];
   const targetBox = Math.floor(targetCell.row / 3) * 3 + Math.floor(targetCell.col / 3);
-
-  if (title.includes('剑鱼')) {
-    return {
-      anchorCells,
-      removeCells: [removalCell],
-      units: [
-        { type: 'row', index: shapeCells[0].row },
-        { type: 'row', index: shapeCells[1].row },
-        { type: 'row', index: shapeCells[2].row },
-      ],
-      candidates,
-      removals,
-      shapes: [{ type: 'polyline', cells: shapeCells, tone: 'amber' }],
-    };
-  }
-
-  if (title.includes('XY')) {
-    return {
-      anchorCells,
-      removeCells: [removalCell],
-      units: [{ type: 'box', index: targetBox }],
-      candidates,
-      removals,
-      shapes: [{ type: 'chain', cells: anchorCells.slice(0, 4), tone: 'teal' }],
-    };
-  }
 
   return {
     anchorCells,
-    removeCells: [removalCell],
-    units: [
-      { type: 'row', index: shapeCells[0].row },
-      { type: 'row', index: shapeCells[shapeCells.length - 1].row },
-      { type: 'col', index: shapeCells[0].col },
-      { type: 'col', index: shapeCells[shapeCells.length - 1].col },
-    ],
+    removeCells: removalCandidate ? [{ row: removalCandidate.row, col: removalCandidate.col }] : [],
+    units: [{ type: 'box', index: targetBox }],
     candidates,
     removals,
-    shapes: [{ type: 'rect', cells: shapeCells, tone: 'amber' }],
+    shapes: [],
   };
 }
 
-function getEmptyTeachingCells(board, targetCell, count) {
-  const cells = [targetCell];
+function getLegalTeachingCandidates(board, solution, targetCell, count) {
+  const candidates = [];
+  const addCandidate = (row, col) => {
+    const digit = solution[row][col];
 
-  for (let row = 0; row < 9 && cells.length < count; row += 1) {
-    for (let col = 0; col < 9 && cells.length < count; col += 1) {
+    if (board[row][col] === 0 && isLegalCandidate(board, row, col, digit)) {
+      candidates.push({ row, col, digit });
+    }
+  };
+
+  addCandidate(targetCell.row, targetCell.col);
+
+  for (let row = 0; row < 9 && candidates.length < count; row += 1) {
+    for (let col = 0; col < 9 && candidates.length < count; col += 1) {
       const isTarget = row === targetCell.row && col === targetCell.col;
 
-      if (!isTarget && board[row][col] === 0) {
-        cells.push({ row, col });
+      if (!isTarget) {
+        addCandidate(row, col);
       }
     }
   }
 
-  return cells;
+  return candidates;
+}
+
+function getLegalCandidateDigits(board, row, col) {
+  const digits = [];
+
+  for (let digit = 1; digit <= 9; digit += 1) {
+    if (isLegalCandidate(board, row, col, digit)) {
+      digits.push(digit);
+    }
+  }
+
+  return digits;
+}
+
+function isLegalCandidate(board, row, col, digit) {
+  if (board[row][col] !== 0) {
+    return false;
+  }
+
+  for (let index = 0; index < 9; index += 1) {
+    if (board[row][index] === digit || board[index][col] === digit) {
+      return false;
+    }
+  }
+
+  const boxRow = Math.floor(row / 3) * 3;
+  const boxCol = Math.floor(col / 3) * 3;
+
+  for (let rowOffset = 0; rowOffset < 3; rowOffset += 1) {
+    for (let colOffset = 0; colOffset < 3; colOffset += 1) {
+      if (board[boxRow + rowOffset][boxCol + colOffset] === digit) {
+        return false;
+      }
+    }
+  }
+
+  return true;
 }
 
 function parseGrid(value) {
