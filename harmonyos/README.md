@@ -18,3 +18,12 @@ HarmonyOS 原生数独应用工程。
 ## Path Requirement
 
 当前仓库路径包含中文目录名，Hvigor 会报 `Invalid project path`。HarmonyOS 原生工程的构建、预览、真机调试和 release 打包必须在只包含英文、数字、连字符、下划线、英文句点、英文括号、空格或 `@` 的路径下执行。
+
+## Release Notes
+
+第一版上线前请核对：
+
+- `docs/harmonyos-native-release-checklist.md`
+- `docs/harmonyos-native-store-copy.md`
+
+第一版保持离线可玩，不接入广告、支付、登录、排行榜或云同步。
