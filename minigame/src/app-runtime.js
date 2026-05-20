@@ -11,6 +11,14 @@ const { createLayout, hitTest } = require('./layout');
 const { levels, getLevelById } = require('./levels');
 const { createMenuLayout, hitTestMenu } = require('./menu');
 const { createPracticeMenuLayout, hitTestPracticeMenu } = require('./practice-menu');
+const { createTechniqueMenuLayout, hitTestTechniqueMenu } = require('./technique-menu');
+const {
+  createTechniqueState,
+  getTechniqueById,
+  getTechniqueGroups,
+  getTechniques,
+  isTechniqueTargetInput,
+} = require('./technique-training');
 const {
   TRAINING_OPTIONS,
   choosePracticeLevel,
@@ -26,7 +34,13 @@ const {
 } = require('./progress');
 const { recordGrowthCompletion } = require('./growth-stats');
 const { loadProgress, saveProgress } = require('./storage');
-const { renderGame, renderMenu, renderPracticeMenu } = require('./renderer');
+const {
+  renderGame,
+  renderMenu,
+  renderPracticeMenu,
+  renderTechniqueLesson,
+  renderTechniqueMenu,
+} = require('./renderer');
 const {
   createCompletionFeedback,
   createNextDailyReport,
@@ -52,6 +66,7 @@ let savedProgress = null;
 let completedLevelIds = [];
 let menuLayout = null;
 let practiceMenuLayout = null;
+let techniqueMenuLayout = null;
 let layout = null;
 let dpr = 1;
 let debugToolsEnabled = false;
@@ -65,6 +80,8 @@ let menuAnimationStartedAt = 0;
 let menuTilt = { x: 0, y: 0 };
 let menuAccelerometerHandler = null;
 let menuAccelerometerActive = false;
+let currentTechnique = null;
+let techniqueState = null;
 
 function boot() {
   debugToolsEnabled = isDebugToolsEnabled(platform.getRawApi ? platform.getRawApi() : null);
@@ -91,6 +108,16 @@ function boot() {
 
     if (scene === 'practiceDifficulty') {
       handlePracticeMenuTouch(touch);
+      return;
+    }
+
+    if (scene === 'techniqueMenu') {
+      handleTechniqueMenuTouch(touch);
+      return;
+    }
+
+    if (scene === 'techniqueLesson') {
+      handleTechniqueLessonTouch(touch);
       return;
     }
 
@@ -128,6 +155,7 @@ function setupCanvas() {
   };
   refreshMenuLayout();
   refreshPracticeMenuLayout();
+  refreshTechniqueMenuLayout();
 }
 
 function refreshMenuLayout() {
@@ -170,6 +198,19 @@ function refreshPracticeMenuLayout() {
   };
 }
 
+function refreshTechniqueMenuLayout() {
+  if (!layout) {
+    return;
+  }
+
+  techniqueMenuLayout = {
+    ...createTechniqueMenuLayout(layout.width, layout.height, getTechniqueGroups(), getTechniques(), {
+      topInset,
+    }),
+    canvasTextScale: layout.canvasTextScale,
+  };
+}
+
 function render() {
   if (scene === 'menu' && menuLayout) {
     renderMenu(ctx, {
@@ -182,6 +223,18 @@ function render() {
 
   if (scene === 'practiceDifficulty' && practiceMenuLayout) {
     renderPracticeMenu(ctx, practiceMenuLayout);
+    return;
+  }
+
+  if (scene === 'techniqueMenu' && techniqueMenuLayout) {
+    renderTechniqueMenu(ctx, techniqueMenuLayout);
+    return;
+  }
+
+  if (scene === 'techniqueLesson' && techniqueState && layout) {
+    renderTechniqueLesson(ctx, techniqueState, layout, {
+      technique: currentTechnique,
+    });
     return;
   }
 
@@ -377,6 +430,13 @@ function handlePracticeMenuTouch(touch) {
     return;
   }
 
+  if (hit.action === 'techniqueTraining') {
+    scene = 'techniqueMenu';
+    refreshTechniqueMenuLayout();
+    render();
+    return;
+  }
+
   if (hit.action === 'difficulty') {
     const trainingDifficulty = hit.trainingDifficulty || hit.difficulty;
     const level = choosePracticeLevel(
@@ -389,6 +449,113 @@ function handlePracticeMenuTouch(touch) {
       startLevel(level, 'practice', { trainingDifficulty });
     }
   }
+}
+
+function handleTechniqueMenuTouch(touch) {
+  const hit =
+    techniqueMenuLayout && hitTestTechniqueMenu(techniqueMenuLayout, touch.clientX, touch.clientY);
+
+  if (!hit) {
+    return;
+  }
+
+  if (hit.action === 'back') {
+    scene = 'practiceDifficulty';
+    refreshPracticeMenuLayout();
+    render();
+    return;
+  }
+
+  if (hit.action === 'technique') {
+    startTechniqueLesson(hit.techniqueId);
+  }
+}
+
+function startTechniqueLesson(techniqueId) {
+  const technique = getTechniqueById(techniqueId);
+
+  if (!technique) {
+    return;
+  }
+
+  currentMode = 'technique';
+  currentTrainingDifficulty = null;
+  currentTechnique = technique;
+  techniqueState = createTechniqueState(technique);
+  scene = 'techniqueLesson';
+  render();
+}
+
+function handleTechniqueLessonTouch(touch) {
+  if (!layout || !techniqueState) {
+    return;
+  }
+
+  const hit = hitTest(layout, touch.clientX, touch.clientY, false, {
+    victoryMode: 'technique',
+  });
+
+  if (!hit) {
+    return;
+  }
+
+  if (hit.type === 'nav' && hit.action === 'back') {
+    playSound('tool');
+    scene = 'techniqueMenu';
+    refreshTechniqueMenuLayout();
+    render();
+    return;
+  }
+
+  if (hit.type === 'cell') {
+    techniqueState = selectCell(techniqueState, hit.row, hit.col);
+    playSound('select');
+    render();
+    return;
+  }
+
+  if (hit.type === 'digit') {
+    const previousState = techniqueState;
+    techniqueState = applyTechniqueDigit(techniqueState, hit.digit);
+
+    if (techniqueState !== previousState) {
+      playSound(techniqueState.completed ? 'complete' : 'input');
+      render();
+    }
+  }
+}
+
+function applyTechniqueDigit(previousState, digit) {
+  if (!previousState || previousState.completed) {
+    return previousState;
+  }
+
+  const { row, col } = previousState.selected;
+  const selectedCell = previousState.cells[row] && previousState.cells[row][col];
+
+  if (!selectedCell || selectedCell.fixed) {
+    return previousState;
+  }
+
+  const completed = isTechniqueTargetInput(currentTechnique, row, col, digit);
+
+  return {
+    ...previousState,
+    completed,
+    cells: previousState.cells.map((cellRow, rowIndex) =>
+      cellRow.map((cell, colIndex) => {
+        if (rowIndex !== row || colIndex !== col) {
+          return cell;
+        }
+
+        return {
+          ...cell,
+          value: digit,
+          notes: [],
+        };
+      }),
+    ),
+  };
 }
 
 function startLevel(level, mode = 'campaign', options = {}) {
@@ -542,7 +709,7 @@ function recordCompletedLevel() {
 }
 
 function persistProgress() {
-  if (!state) {
+  if (!state || currentMode === 'technique' || scene === 'techniqueMenu' || scene === 'techniqueLesson') {
     return;
   }
 

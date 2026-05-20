@@ -83,6 +83,39 @@ function renderTechniqueMenu(ctx, layout) {
   }
 }
 
+function renderTechniqueLesson(ctx, state, layout, options = {}) {
+  const technique = options.technique || {};
+  const viewLayout = {
+    ...layout,
+    level: {
+      ...(state && state.level ? state.level : {}),
+      label: '技巧训练',
+      title: technique.title || (state && state.level && state.level.title) || '技巧训练',
+      rules: ['classic'],
+    },
+    stateNoteMode: false,
+    modeContext: {
+      mode: 'technique',
+      label: '技巧训练',
+      title: technique.title || (state && state.level && state.level.title) || '技巧训练',
+    },
+  };
+
+  ctx.save();
+  try {
+    clear(ctx, viewLayout.width, viewLayout.height);
+    drawBackground(ctx, viewLayout);
+    drawTopBar(ctx, viewLayout);
+    drawTechniqueLessonPrompt(ctx, viewLayout, state, technique);
+    drawTechniqueFocusHalo(ctx, viewLayout, technique);
+    drawBoard(ctx, state, viewLayout);
+    drawTools(ctx, viewLayout);
+    drawKeypad(ctx, viewLayout);
+  } finally {
+    ctx.restore();
+  }
+}
+
 function clear(ctx, width, height) {
   ctx.clearRect(0, 0, width, height);
 }
@@ -562,6 +595,64 @@ function drawTechniqueCard(ctx, layout, card, railColor) {
   }
 
   ctx.textAlign = 'left';
+}
+
+function drawTechniqueLessonPrompt(ctx, layout, state, technique) {
+  const completed = state && state.completed === true;
+  const text = completed
+    ? technique.lesson && technique.lesson.successText
+      ? technique.lesson.successText
+      : '这一步完成了，观察路径已经连起来。'
+    : technique.lesson && technique.lesson.prompt
+      ? technique.lesson.prompt
+      : '观察目标格，填入这一步最确定的数字。';
+  const promptX = layout.margin;
+  const promptY = layout.ruleStrip.y - 2;
+  const promptWidth = layout.width - layout.margin * 2;
+  const panelHeight = layout.compact ? 38 : 42;
+
+  roundRect(
+    ctx,
+    promptX,
+    promptY,
+    promptWidth,
+    panelHeight,
+    16,
+    completed ? 'rgba(22, 163, 160, 0.16)' : 'rgba(255, 255, 255, 0.7)',
+  );
+  ctx.fillStyle = completed ? '#087471' : '#18211f';
+  setFont(ctx, layout, layout.compact ? '850 12px sans-serif' : '850 13px sans-serif');
+  wrapText(ctx, text, promptX + 14, promptY + (layout.compact ? 18 : 19), promptWidth - 112, layout.compact ? 14 : 15);
+
+  if (!completed) {
+    const hintWidth = 70;
+    const hintX = promptX + promptWidth - hintWidth - 10;
+    const hintY = promptY + (panelHeight - 26) / 2;
+
+    roundRect(ctx, hintX, hintY, hintWidth, 26, 13, 'rgba(255, 200, 97, 0.24)');
+    ctx.fillStyle = '#8a691f';
+    setFont(ctx, layout, '900 12px sans-serif');
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('看提示', hintX + hintWidth / 2, hintY + 13.5);
+  }
+
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'alphabetic';
+}
+
+function drawTechniqueFocusHalo(ctx, layout, technique) {
+  const target = technique && technique.lesson && technique.lesson.target;
+
+  if (!target) {
+    return;
+  }
+
+  const cellSize = layout.board.size / 9;
+  const x = layout.board.x + target.col * cellSize;
+  const y = layout.board.y + target.row * cellSize;
+
+  roundRect(ctx, x - 3, y - 3, cellSize + 6, cellSize + 6, 10, 'rgba(255, 200, 97, 0.2)');
 }
 
 function getPracticeRailColor(index) {
@@ -1246,5 +1337,6 @@ module.exports = {
   renderGame,
   renderMenu,
   renderPracticeMenu,
+  renderTechniqueLesson,
   renderTechniqueMenu,
 };

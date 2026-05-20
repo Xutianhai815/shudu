@@ -197,6 +197,66 @@ test('app runtime practice victory next uses recommended difficulty and restart 
   }
 });
 
+test('app runtime completes a technique lesson from the free practice entry', () => {
+  const runtime = bootAppRuntime();
+
+  try {
+    tapMenuMode(runtime, 'practice');
+    tapPracticeTechniqueTraining(runtime);
+
+    assert.ok(runtime.latestTechniqueMenuCall());
+    assert.match(runtime.drawnText(), /技巧训练/);
+
+    tapTechniqueCard(runtime, 'single-empty');
+
+    let lesson = runtime.latestTechniqueLessonCall();
+    assert.equal(lesson.technique.id, 'single-empty');
+    assert.equal(lesson.state.completed, false);
+    assert.match(runtime.drawnText(), /唯一空格/);
+
+    tapCell(runtime, lesson.layout, 0, 1);
+    lesson = runtime.latestTechniqueLessonCall();
+    tapDigit(runtime, lesson.layout, 3);
+
+    lesson = runtime.latestTechniqueLessonCall();
+    assert.equal(lesson.state.completed, true);
+    assert.match(runtime.drawnText(), /这一行补齐了，唯一空格的判断很清楚。/);
+
+    tapTechniqueLessonBack(runtime);
+    assert.ok(runtime.latestTechniqueMenuCall());
+    tapTechniqueMenuBack(runtime);
+    assert.ok(runtime.latestPracticeMenuCall());
+  } finally {
+    runtime.restore();
+  }
+});
+
+test('app runtime technique training does not persist campaign, practice, or growth progress', () => {
+  const initialProgress = createProgressFixture();
+  const runtime = bootAppRuntime({ initialProgress });
+
+  try {
+    tapMenuMode(runtime, 'practice');
+    tapPracticeTechniqueTraining(runtime);
+    tapTechniqueCard(runtime, 'single-empty');
+
+    let lesson = runtime.latestTechniqueLessonCall();
+    tapCell(runtime, lesson.layout, 0, 1);
+    lesson = runtime.latestTechniqueLessonCall();
+    tapDigit(runtime, lesson.layout, 3);
+
+    assert.equal(runtime.latestTechniqueLessonCall().state.completed, true);
+    assert.equal(runtime.savedWrites.length, 0);
+    assert.deepEqual(initialProgress.completedLevelIds, ['lab-01', 'lab-02']);
+    assert.equal(initialProgress.practiceStats.totalCompleted, 4);
+    assert.equal(initialProgress.growthStats.totalCompletedCount, 6);
+    assert.equal(initialProgress.growthStats.campaignCompletedCount, 2);
+    assert.equal(initialProgress.growthStats.practiceCompletedCount, 4);
+  } finally {
+    runtime.restore();
+  }
+});
+
 function bootAppRuntime(options = {}) {
   const originalLoad = Module._load;
   const originalAppRuntimeCache = require.cache[appRuntimePath];
@@ -239,6 +299,23 @@ function bootAppRuntime(options = {}) {
             layout,
           });
           return actual.renderPracticeMenu(ctxArg, layout);
+        },
+        renderTechniqueMenu(ctxArg, layout) {
+          renderCalls.push({
+            type: 'techniqueMenu',
+            layout,
+          });
+          return actual.renderTechniqueMenu(ctxArg, layout);
+        },
+        renderTechniqueLesson(ctxArg, state, layout, renderOptions) {
+          renderCalls.push({
+            type: 'techniqueLesson',
+            state,
+            layout,
+            technique: renderOptions && renderOptions.technique,
+            options: renderOptions,
+          });
+          return actual.renderTechniqueLesson(ctxArg, state, layout, renderOptions);
         },
       };
     }
@@ -340,6 +417,16 @@ function bootAppRuntime(options = {}) {
       assert.ok(practiceMenuCall);
       return practiceMenuCall;
     },
+    latestTechniqueMenuCall() {
+      const techniqueMenuCall = [...renderCalls].reverse().find((call) => call.type === 'techniqueMenu');
+      assert.ok(techniqueMenuCall);
+      return techniqueMenuCall;
+    },
+    latestTechniqueLessonCall() {
+      const techniqueLessonCall = [...renderCalls].reverse().find((call) => call.type === 'techniqueLesson');
+      assert.ok(techniqueLessonCall);
+      return techniqueLessonCall;
+    },
   };
 }
 
@@ -354,6 +441,30 @@ function tapPracticeTrainingDifficulty(runtime, trainingDifficulty) {
   const card = call.layout.difficultyCards.find((item) => item.trainingDifficulty === trainingDifficulty);
   assert.ok(card);
   runtime.touch(card.x + card.width / 2, card.y + card.height / 2);
+}
+
+function tapPracticeTechniqueTraining(runtime) {
+  const button = runtime.latestPracticeMenuCall().layout.techniqueTrainingButton;
+  assert.ok(button);
+  runtime.touch(button.x + button.width / 2, button.y + button.height / 2);
+}
+
+function tapTechniqueCard(runtime, techniqueId) {
+  const card = runtime.latestTechniqueMenuCall().layout.techniqueCards.find((item) => item.id === techniqueId);
+  assert.ok(card);
+  runtime.touch(card.x + card.width / 2, card.y + card.height / 2);
+}
+
+function tapTechniqueMenuBack(runtime) {
+  const button = runtime.latestTechniqueMenuCall().layout.backButton;
+  assert.ok(button);
+  runtime.touch(button.x + button.width / 2, button.y + button.height / 2);
+}
+
+function tapTechniqueLessonBack(runtime) {
+  const button = runtime.latestTechniqueLessonCall().layout.backButton;
+  assert.ok(button);
+  runtime.touch(button.x + button.width / 2, button.y + button.height / 2);
 }
 
 function tapVictoryAction(runtime, action) {
@@ -400,6 +511,40 @@ function tapDigit(runtime, layout, digit) {
   const key = layout.keypad.keys.find((item) => item.digit === digit);
   assert.ok(key);
   runtime.touch(key.x + key.width / 2, key.y + key.height / 2);
+}
+
+function createProgressFixture() {
+  return {
+    version: 1,
+    activeRun: null,
+    practiceRun: null,
+    completedLevelIds: ['lab-01', 'lab-02'],
+    dailyReport: {
+      date: '2026-05-19',
+      completionCount: 2,
+      completedLevelIds: ['lab-01', 'lab-02'],
+    },
+    practiceStats: {
+      totalCompleted: 4,
+      lastDifficulty: 'normal',
+      recentLevelIdsByDifficulty: {
+        intro: 'lab-01',
+        easy: 'lab-02',
+        normal: 'lab-03',
+        hard: null,
+      },
+    },
+    growthStats: {
+      currentStreak: 3,
+      bestStreak: 5,
+      lastCompletedDate: '2026-05-19',
+      todayDate: '2026-05-19',
+      todayCompletedCount: 2,
+      totalCompletedCount: 6,
+      campaignCompletedCount: 2,
+      practiceCompletedCount: 4,
+    },
+  };
 }
 
 function createMockCanvasContext() {

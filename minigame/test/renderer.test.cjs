@@ -6,9 +6,20 @@ const { levels } = require('../src/levels');
 const { createMenuLayout } = require('../src/menu');
 const { createPracticeMenuLayout } = require('../src/practice-menu');
 const { createTechniqueMenuLayout } = require('../src/technique-menu');
-const { getTechniqueGroups, getTechniques } = require('../src/technique-training');
+const {
+  createTechniqueState,
+  getTechniqueById,
+  getTechniqueGroups,
+  getTechniques,
+} = require('../src/technique-training');
 const { applyDigit, createPuzzleState, selectCell } = require('../src/puzzle');
-const { renderGame, renderMenu, renderPracticeMenu, renderTechniqueMenu } = require('../src/renderer');
+const {
+  renderGame,
+  renderMenu,
+  renderPracticeMenu,
+  renderTechniqueLesson,
+  renderTechniqueMenu,
+} = require('../src/renderer');
 const { createCompletionFeedback } = require('../src/derust');
 
 test('renderer draws the first level without a browser or WeChat canvas', () => {
@@ -819,6 +830,41 @@ test('renderer draws the technique training directory without pressure copy', ()
   assert.match(text, /唯一空格/);
   assert.match(text, /X-Wing/);
   assert.equal(/已掌握|完成率|正确率|学习失败|等级不足/.test(text), false);
+});
+
+test('renderer draws a technique lesson without pressure copy', () => {
+  const ctx = createMockCanvasContext();
+  const layout = createLayout(430, 932);
+  const technique = getTechniqueById('single-empty');
+  const state = createTechniqueState(technique);
+
+  renderTechniqueLesson(ctx, state, layout, { technique });
+
+  const text = getDrawnText(ctx);
+  assert.match(text, /技巧训练/);
+  assert.match(text, /唯一空格/);
+  assert.match(text, /第一行只留出一个位置，找出这一行缺少的数字。/);
+  assert.match(text, /看提示/);
+  assert.equal(/已掌握|完成率|正确率|学习失败/.test(text), false);
+});
+
+test('renderer draws technique lesson success copy when completed', () => {
+  const ctx = createMockCanvasContext();
+  const layout = createLayout(430, 932);
+  const technique = getTechniqueById('single-empty');
+  const state = {
+    ...createTechniqueState(technique),
+    completed: true,
+  };
+  const target = technique.lesson.target;
+  state.cells[target.row][target.col] = {
+    ...state.cells[target.row][target.col],
+    value: target.digit,
+  };
+
+  renderTechniqueLesson(ctx, state, layout, { technique });
+
+  assert.match(getDrawnText(ctx), /这一行补齐了，唯一空格的判断很清楚。/);
 });
 
 test('renderer marks unavailable free training difficulties as closed', () => {
