@@ -152,6 +152,7 @@ test('createTechniqueState builds an isolated Sudoku-like technique state', () =
   assert.deepEqual(state.level.rules, ['classic']);
   assert.deepEqual(state.selected, { row, col });
   assert.equal(state.noteMode, false);
+  assert.equal(state.currentStepIndex, 0);
   assert.equal(state.completed, false);
   assert.equal(state.cells.length, 9);
   assert.equal(state.cells[0].length, 9);
@@ -181,4 +182,43 @@ test('isTechniqueTargetInput only accepts the lesson target input', () => {
   assert.equal(isTechniqueTargetInput(technique, row, col + 1, digit), false);
   assert.equal(isTechniqueTargetInput(technique, row, col, digit + 1), false);
   assert.equal(isTechniqueTargetInput('unknown-technique', row, col, digit), false);
+});
+
+test('each technique lesson exposes three or four guided observation steps', () => {
+  getTechniques().forEach((technique) => {
+    assert.ok(Array.isArray(technique.lesson.steps), `${technique.id} missing steps`);
+    assert.ok(technique.lesson.steps.length >= 3, `${technique.id} has too few steps`);
+    assert.ok(technique.lesson.steps.length <= 4, `${technique.id} has too many steps`);
+
+    technique.lesson.steps.forEach((step, index) => {
+      assert.equal(typeof step.title, 'string');
+      assert.equal(typeof step.text, 'string');
+      assert.equal(step.title.length > 0, true);
+      assert.equal(step.text.length > 0, true);
+      assert.equal(step.inputEnabled, index === technique.lesson.steps.length - 1);
+      assert.equal(step.targetVisible, index >= technique.lesson.steps.length - 2);
+      assert.ok(Array.isArray(step.highlightCells));
+      assert.ok(Array.isArray(step.highlightUnits));
+      assert.ok(Array.isArray(step.candidateHighlights));
+      assert.ok(Array.isArray(step.shapeHighlights));
+    });
+  });
+});
+
+test('basic technique lessons no longer look like one-empty-cell puzzles', () => {
+  getTechniques('basic').forEach((technique) => {
+    const emptyCount = technique.lesson.board.flat().filter((value) => value === 0).length;
+
+    assert.ok(emptyCount >= 18, `${technique.id} should have enough open cells for a real observation exercise`);
+    assert.notEqual(technique.lesson.steps[0].title, '自己填一步');
+  });
+});
+
+test('advanced technique lessons include candidate or shape teaching data', () => {
+  getTechniques('advanced').forEach((technique) => {
+    const hasCandidate = technique.lesson.steps.some((step) => step.candidateHighlights.length > 0);
+    const hasShape = technique.lesson.steps.some((step) => step.shapeHighlights.length > 0);
+
+    assert.equal(hasCandidate || hasShape, true, `${technique.id} needs candidate or shape highlights`);
+  });
 });

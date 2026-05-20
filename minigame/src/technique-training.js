@@ -1,4 +1,5 @@
-const SOLUTION_GRID = '438627591725391468961458372153746829296815743847239615679183254314562987582974136';
+const TRAINING_SOLUTION_GRID = '438627591725391468961458372153746829296815743847239615679183254314562987582974136';
+const TRAINING_BOARD_GRID = '030020090700001060060450300003006020096000740040200600009083050010560007080070030';
 
 const TECHNIQUE_GROUPS = deepFreeze([
   {
@@ -41,6 +42,41 @@ const TECHNIQUE_SPECS = deepFreeze(
       summary: '结合同行、同列和同宫已有数字，留下唯一可填候选。',
       prompt: '检查这一格的行列宫，排除已出现的数字后填入剩下的候选。',
       successText: '候选收束得很好，这格只留下一个选择。',
+      steps: [
+        {
+          title: '先看目标格',
+          text: '目标格会同时受到同一行、同一列和同一宫限制。',
+          highlightCells: [{ row: 0, col: 2 }],
+          highlightUnits: [{ type: 'row', index: 0 }, { type: 'col', index: 2 }, { type: 'box', index: 0 }],
+          targetVisible: true,
+          inputEnabled: false,
+        },
+        {
+          title: '排除已有数字',
+          text: '这些范围里的数字会排除大部分候选。',
+          highlightCells: [{ row: 0, col: 1 }, { row: 1, col: 0 }, { row: 2, col: 2 }],
+          highlightUnits: [{ type: 'box', index: 0 }],
+          candidateHighlights: [{ row: 0, col: 2, digit: 1, tone: 'muted' }, { row: 0, col: 2, digit: 8, tone: 'muted' }],
+          targetVisible: true,
+          inputEnabled: false,
+        },
+        {
+          title: '只剩一个可能',
+          text: '排除后，目标格只剩下这一格的答案。',
+          highlightCells: [{ row: 0, col: 2 }],
+          candidateHighlights: [{ row: 0, col: 2, digit: 8, tone: 'amber' }],
+          targetVisible: true,
+          inputEnabled: false,
+        },
+        {
+          title: '自己填一步',
+          text: '现在填入目标数字，完成这次观察。',
+          highlightCells: [{ row: 0, col: 2 }],
+          candidateHighlights: [{ row: 0, col: 2, digit: 8, tone: 'amber' }],
+          targetVisible: true,
+          inputEnabled: true,
+        },
+      ],
     },
     {
       id: 'digit-scan',
@@ -131,6 +167,42 @@ const TECHNIQUE_SPECS = deepFreeze(
       summary: '两行两列形成矩形候选时，可排除矩形外同列候选。',
       prompt: '寻找同数字形成的矩形结构，再回到目标格判断。',
       successText: '矩形结构抓住了，鱼形线索开始发挥作用。',
+      steps: [
+        {
+          title: '找两行候选',
+          text: '先看数字 3 在两行里是否只落在同两列。',
+          highlightUnits: [{ type: 'row', index: 1 }, { type: 'row', index: 6 }],
+          candidateHighlights: [
+            { row: 1, col: 1, digit: 3, tone: 'teal' },
+            { row: 1, col: 7, digit: 3, tone: 'teal' },
+            { row: 6, col: 1, digit: 3, tone: 'teal' },
+            { row: 6, col: 7, digit: 3, tone: 'teal' },
+          ],
+        },
+        {
+          title: '形成矩形',
+          text: '两行两列形成矩形后，同列其他 3 可以被排除。',
+          shapeHighlights: [{
+            type: 'rect',
+            cells: [{ row: 1, col: 1 }, { row: 1, col: 7 }, { row: 6, col: 1 }, { row: 6, col: 7 }],
+            tone: 'amber',
+          }],
+          candidateHighlights: [{ row: 4, col: 1, digit: 3, tone: 'muted' }],
+        },
+        {
+          title: '回到目标格',
+          text: '候选被排除后，目标格留下确定数字。',
+          highlightCells: [{ row: 1, col: 3 }],
+          targetVisible: true,
+        },
+        {
+          title: '自己填一步',
+          text: '填入目标数字，完成这次结构观察。',
+          highlightCells: [{ row: 1, col: 3 }],
+          targetVisible: true,
+          inputEnabled: true,
+        },
+      ],
     },
     {
       id: 'swordfish',
@@ -166,8 +238,10 @@ function getTechniqueGroups() {
   return cloneValue(TECHNIQUE_GROUPS);
 }
 
-function getTechniques() {
-  return cloneValue(TECHNIQUE_SPECS);
+function getTechniques(groupId) {
+  const techniques = groupId ? TECHNIQUE_SPECS.filter((technique) => technique.group === groupId) : TECHNIQUE_SPECS;
+
+  return cloneValue(techniques);
 }
 
 function getTechniqueById(value) {
@@ -220,6 +294,7 @@ function createTechniqueState(value) {
       col: technique.lesson.target.col,
     },
     noteMode: false,
+    currentStepIndex: 0,
     completed: false,
     cells: givens.map((row, rowIndex) =>
       row.map((value, colIndex) => ({
@@ -259,13 +334,16 @@ function resolveTechnique(value, options = {}) {
   return technique;
 }
 
-function createTechniqueSpec({ id, group, title, target, summary, prompt, successText }) {
-  const solution = parseGrid(SOLUTION_GRID);
-  const board = cloneGrid(solution);
+function createTechniqueSpec({ id, group, title, target, summary, prompt, successText, steps }) {
+  const solution = parseGrid(TRAINING_SOLUTION_GRID);
+  const board = parseGrid(TRAINING_BOARD_GRID);
   const [row, col] = target;
   const digit = solution[row][col];
 
   board[row][col] = 0;
+  const rawSteps = createDefaultSteps({ title, target: { row, col, digit }, group, prompt });
+  const sourceSteps = Array.isArray(steps) && steps.length ? steps : rawSteps;
+  const normalizedSteps = sourceSteps.map((step, index) => createLessonStep(step, index, sourceSteps.length));
 
   return {
     id,
@@ -283,7 +361,178 @@ function createTechniqueSpec({ id, group, title, target, summary, prompt, succes
         digit,
       },
       notes: {},
+      steps: normalizedSteps,
     },
+  };
+}
+
+function createDefaultSteps({ title, target, group, prompt }) {
+  const { row, col, digit } = target;
+  const targetCell = { row, col };
+  const relatedBox = Math.floor(row / 3) * 3 + Math.floor(col / 3);
+  const advancedDecorations = createAdvancedStepDecorations(title, row, col, digit);
+
+  if (group === 'advanced') {
+    return [
+      {
+        title: '先看结构',
+        text: prompt,
+        highlightCells: advancedDecorations.anchorCells,
+        highlightUnits: advancedDecorations.units,
+        candidateHighlights: advancedDecorations.candidates,
+        shapeHighlights: advancedDecorations.shapes,
+      },
+      {
+        title: '排除干扰',
+        text: '观察被同一结构影响的位置，把不稳定候选先放到一边。',
+        highlightCells: advancedDecorations.removeCells,
+        candidateHighlights: advancedDecorations.removals,
+        shapeHighlights: advancedDecorations.shapes,
+      },
+      {
+        title: '回到目标格',
+        text: '结构线索收束后，目标格已经可以被单独观察。',
+        highlightCells: [targetCell],
+        targetVisible: true,
+      },
+      {
+        title: '自己填一步',
+        text: '现在填入目标数字，完成这次结构观察。',
+        highlightCells: [targetCell],
+        candidateHighlights: [{ row, col, digit, tone: 'amber' }],
+        targetVisible: true,
+        inputEnabled: true,
+      },
+    ];
+  }
+
+  return [
+    {
+      title: '先看范围',
+      text: prompt,
+      highlightCells: [targetCell],
+      highlightUnits: [{ type: 'row', index: row }, { type: 'col', index: col }, { type: 'box', index: relatedBox }],
+      targetVisible: true,
+    },
+    {
+      title: '排除已有数字',
+      text: '同一行、同一列和同一宫里已经出现的数字，都会压缩目标格的选择。',
+      highlightCells: getPeerPreviewCells(row, col),
+      highlightUnits: [{ type: 'box', index: relatedBox }],
+      candidateHighlights: [{ row, col, digit: ((digit + 2) % 9) + 1, tone: 'muted' }],
+      targetVisible: true,
+    },
+    {
+      title: '留下关键候选',
+      text: '候选被整理后，目标数字成为这一步最清晰的落点。',
+      highlightCells: [targetCell],
+      candidateHighlights: [{ row, col, digit, tone: 'amber' }],
+      targetVisible: true,
+    },
+    {
+      title: '自己填一步',
+      text: '现在填入目标数字，完成这次观察。',
+      highlightCells: [targetCell],
+      candidateHighlights: [{ row, col, digit, tone: 'amber' }],
+      targetVisible: true,
+      inputEnabled: true,
+    },
+  ];
+}
+
+function createLessonStep(step, index, total) {
+  return {
+    title: step.title,
+    text: step.text,
+    highlightCells: normalizeCells(step.highlightCells || []),
+    highlightUnits: normalizeUnits(step.highlightUnits || []),
+    candidateHighlights: normalizeCandidateHighlights(step.candidateHighlights || []),
+    shapeHighlights: normalizeShapeHighlights(step.shapeHighlights || []),
+    targetVisible: index >= total - 2,
+    inputEnabled: index === total - 1,
+  };
+}
+
+function normalizeCells(cells) {
+  return cells
+    .filter((cell) => cell && Number.isInteger(cell.row) && Number.isInteger(cell.col))
+    .map((cell) => ({ row: cell.row, col: cell.col }));
+}
+
+function normalizeUnits(units) {
+  return units
+    .filter((unit) => unit && ['row', 'col', 'box'].includes(unit.type) && Number.isInteger(unit.index))
+    .map((unit) => ({ type: unit.type, index: unit.index }));
+}
+
+function normalizeCandidateHighlights(items) {
+  return items
+    .filter((item) => item && Number.isInteger(item.row) && Number.isInteger(item.col) && Number.isInteger(item.digit))
+    .map((item) => ({
+      row: item.row,
+      col: item.col,
+      digit: item.digit,
+      tone: item.tone || 'teal',
+    }));
+}
+
+function normalizeShapeHighlights(items) {
+  return items
+    .filter((item) => item && item.type)
+    .map((item) => ({
+      type: item.type,
+      cells: normalizeCells(item.cells || []),
+      tone: item.tone || 'amber',
+    }));
+}
+
+function getPeerPreviewCells(row, col) {
+  return [
+    { row, col: (col + 1) % 9 },
+    { row: (row + 1) % 9, col },
+    { row: Math.floor(row / 3) * 3, col: Math.floor(col / 3) * 3 },
+  ].filter((cell) => cell.row !== row || cell.col !== col);
+}
+
+function createAdvancedStepDecorations(title, row, col, digit) {
+  const targetCell = { row, col };
+  const rowA = Math.max(0, row);
+  const rowB = Math.min(8, row + 4);
+  const colA = Math.max(0, col);
+  const colB = Math.min(8, col + 4);
+  const anchorCells = [targetCell, { row: rowA, col: colA }, { row: rowA, col: colB }, { row: rowB, col: colA }, { row: rowB, col: colB }];
+  const candidates = anchorCells.slice(1).map((cell) => ({ ...cell, digit, tone: 'teal' }));
+  const removals = [{ row: Math.min(8, row + 2), col: colA, digit, tone: 'muted' }];
+
+  if (title.includes('剑鱼')) {
+    return {
+      anchorCells,
+      removeCells: [{ row: Math.min(8, row + 2), col: colA }],
+      units: [{ type: 'row', index: rowA }, { type: 'row', index: Math.min(8, rowA + 3) }, { type: 'row', index: rowB }],
+      candidates,
+      removals,
+      shapes: [{ type: 'polyline', cells: anchorCells.slice(1), tone: 'amber' }],
+    };
+  }
+
+  if (title.includes('XY')) {
+    return {
+      anchorCells,
+      removeCells: [{ row: Math.min(8, row + 1), col: Math.min(8, col + 1) }],
+      units: [{ type: 'box', index: Math.floor(row / 3) * 3 + Math.floor(col / 3) }],
+      candidates,
+      removals,
+      shapes: [{ type: 'chain', cells: anchorCells.slice(0, 4), tone: 'teal' }],
+    };
+  }
+
+  return {
+    anchorCells,
+    removeCells: [{ row: Math.min(8, row + 2), col: colA }],
+    units: [{ type: 'row', index: rowA }, { type: 'row', index: rowB }, { type: 'col', index: colA }, { type: 'col', index: colB }],
+    candidates,
+    removals,
+    shapes: [{ type: 'rect', cells: anchorCells.slice(1), tone: 'amber' }],
   };
 }
 
