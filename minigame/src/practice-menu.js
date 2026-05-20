@@ -32,7 +32,11 @@ function createPracticeMenuLayout(width, height, levels, options = {}) {
   const availableCardHeight =
     (height - margin - cardStartY - cardGap * (TRAINING_OPTIONS.length - 1)) /
     TRAINING_OPTIONS.length;
-  const cardHeight = Math.max(70, Math.min(compact ? 86 : 108, availableCardHeight));
+  const minCardHeight = compact ? 58 : 70;
+  const cardHeight = Math.max(
+    minCardHeight,
+    Math.min(compact ? 86 : 108, availableCardHeight),
+  );
   const availableSourceDifficulties = getAvailableSourceDifficulties(levels);
   const recommendedTrainingDifficulty =
     getTrainingOption(options.recommendedTrainingDifficulty)

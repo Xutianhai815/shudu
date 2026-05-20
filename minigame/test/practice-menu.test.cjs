@@ -80,6 +80,14 @@ test('createPracticeMenuLayout keeps controls inside a short viewport', () => {
   });
 });
 
+test('createPracticeMenuLayout keeps cards inside compact viewport with a top inset', () => {
+  const layout = createPracticeMenuLayout(320, 568, levels, { topInset: 96 });
+
+  layout.difficultyCards.forEach((card) => {
+    assert.ok(card.y + card.height <= layout.height - layout.margin);
+  });
+});
+
 test('createPracticeMenuLayout starts below the reserved top safe area', () => {
   const layout = createPracticeMenuLayout(430, 932, levels, { topInset: 96 });
 
