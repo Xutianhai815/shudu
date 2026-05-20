@@ -82,6 +82,7 @@ let menuAccelerometerHandler = null;
 let menuAccelerometerActive = false;
 let currentTechnique = null;
 let techniqueState = null;
+let techniqueMenuReturnScene = 'practiceDifficulty';
 
 function boot() {
   debugToolsEnabled = isDebugToolsEnabled(platform.getRawApi ? platform.getRawApi() : null);
@@ -359,7 +360,7 @@ function handleMenuTouch(touch) {
   }
 
   if (hit.action === 'techniqueTraining') {
-    openTechniqueMenu();
+    openTechniqueMenu({ returnScene: 'menu' });
     return;
   }
 
@@ -419,7 +420,8 @@ function startOrContinuePractice() {
   render();
 }
 
-function openTechniqueMenu() {
+function openTechniqueMenu(options = {}) {
+  techniqueMenuReturnScene = options.returnScene || 'practiceDifficulty';
   currentMode = 'technique';
   currentTrainingDifficulty = null;
   scene = 'techniqueMenu';
@@ -445,7 +447,7 @@ function handlePracticeMenuTouch(touch) {
   }
 
   if (hit.action === 'techniqueTraining') {
-    openTechniqueMenu();
+    openTechniqueMenu({ returnScene: 'practiceDifficulty' });
     return;
   }
 
@@ -472,8 +474,14 @@ function handleTechniqueMenuTouch(touch) {
   }
 
   if (hit.action === 'back') {
-    scene = 'practiceDifficulty';
-    refreshPracticeMenuLayout();
+    if (techniqueMenuReturnScene === 'menu') {
+      scene = 'menu';
+      refreshMenuLayout();
+      startMenuAnimation();
+    } else {
+      scene = 'practiceDifficulty';
+      refreshPracticeMenuLayout();
+    }
     render();
     return;
   }

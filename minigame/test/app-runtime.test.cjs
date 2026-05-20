@@ -106,6 +106,31 @@ test('app runtime opens technique training directly from the home screen', () =>
     assert.ok(runtime.latestTechniqueMenuCall());
     assert.match(runtime.drawnText(), /技巧训练/);
     assert.match(runtime.drawnText(), /初阶技巧/);
+
+    tapTechniqueMenuBack(runtime);
+
+    assert.ok(runtime.latestMenuCall());
+    assert.match(runtime.drawnText(), /闯关挑战/);
+    assert.match(runtime.drawnText(), /自由练习/);
+  } finally {
+    runtime.restore();
+  }
+});
+
+test('app runtime returns from practice technique training to practice difficulty', () => {
+  const runtime = bootAppRuntime();
+
+  try {
+    tapMenuMode(runtime, 'practice');
+    tapPracticeTechniqueTraining(runtime);
+
+    assert.ok(runtime.latestTechniqueMenuCall());
+
+    tapTechniqueMenuBack(runtime);
+
+    assert.ok(runtime.latestPracticeMenuCall());
+    assert.match(runtime.drawnText(), /自由练习/);
+    assert.match(runtime.drawnText(), /推荐：热身/);
   } finally {
     runtime.restore();
   }

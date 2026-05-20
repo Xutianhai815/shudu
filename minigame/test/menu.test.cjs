@@ -267,6 +267,11 @@ test('hitTestMenu returns null for card gap and outside menu', () => {
   assert.equal(hitTestMenu(layout, 1, 1), null);
 });
 
+test('hitTestMenu returns null for missing layout', () => {
+  assert.equal(hitTestMenu(null, 1, 1), null);
+  assert.equal(hitTestMenu(undefined, 1, 1), null);
+});
+
 test('campaign and practice mode cards do not overlap', () => {
   const layout = createMenuLayout(430, 932, levels, {
     hasActiveRun: true,

@@ -227,6 +227,10 @@ function normalizeTopInset(topInset, height) {
 }
 
 function hitTestMenu(layout, x, y) {
+  if (!layout) {
+    return null;
+  }
+
   const modeCards = layout && layout.modeCards ? layout.modeCards : {};
   const campaignCard = modeCards.campaign;
   const practiceCard = modeCards.practice;
