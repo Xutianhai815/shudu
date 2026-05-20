@@ -231,6 +231,37 @@ test('app runtime completes a technique lesson from the free practice entry', ()
   }
 });
 
+test('app runtime keeps technique lesson input target focused', () => {
+  const runtime = bootAppRuntime();
+
+  try {
+    tapMenuMode(runtime, 'practice');
+    tapPracticeTechniqueTraining(runtime);
+    tapTechniqueCard(runtime, 'single-empty');
+
+    let lesson = runtime.latestTechniqueLessonCall();
+    const originalSelected = { ...lesson.state.selected };
+    const nonTargetValue = lesson.state.cells[0][2].value;
+
+    tapCell(runtime, lesson.layout, 0, 2);
+    lesson = runtime.latestTechniqueLessonCall();
+    assert.deepEqual(lesson.state.selected, originalSelected);
+    assert.equal(lesson.state.cells[0][2].value, nonTargetValue);
+
+    tapDigit(runtime, lesson.layout, 9);
+    lesson = runtime.latestTechniqueLessonCall();
+    assert.equal(lesson.state.completed, false);
+    assert.equal(lesson.state.cells[0][1].value, 9);
+
+    tapDigit(runtime, lesson.layout, 3);
+    lesson = runtime.latestTechniqueLessonCall();
+    assert.equal(lesson.state.completed, true);
+    assert.equal(lesson.state.cells[0][1].value, 3);
+  } finally {
+    runtime.restore();
+  }
+});
+
 test('app runtime technique training does not persist campaign, practice, or growth progress', () => {
   const initialProgress = createProgressFixture();
   const runtime = bootAppRuntime({ initialProgress });
@@ -252,6 +283,38 @@ test('app runtime technique training does not persist campaign, practice, or gro
     assert.equal(initialProgress.growthStats.totalCompletedCount, 6);
     assert.equal(initialProgress.growthStats.campaignCompletedCount, 2);
     assert.equal(initialProgress.growthStats.practiceCompletedCount, 4);
+  } finally {
+    runtime.restore();
+  }
+});
+
+test('app runtime preserves stored campaign and practice runs through technique training', () => {
+  const initialProgress = createProgressFixture({
+    activeRun: createRunFixture(levels[0], 'campaign', { completed: false }),
+    practiceRun: createRunFixture(levels[1], 'practice', {
+      completed: true,
+      trainingDifficulty: 'steady',
+    }),
+  });
+  const runtime = bootAppRuntime({ initialProgress });
+
+  try {
+    tapMenuMode(runtime, 'practice');
+    tapPracticeTechniqueTraining(runtime);
+    tapTechniqueCard(runtime, 'single-empty');
+    tapTechniqueLessonBack(runtime);
+    tapTechniqueMenuBack(runtime);
+
+    assert.ok(runtime.latestPracticeMenuCall());
+    assert.equal(runtime.savedWrites.length, 0);
+    assert.deepEqual(initialProgress.activeRun, createRunFixture(levels[0], 'campaign', { completed: false }));
+    assert.deepEqual(
+      initialProgress.practiceRun,
+      createRunFixture(levels[1], 'practice', {
+        completed: true,
+        trainingDifficulty: 'steady',
+      }),
+    );
   } finally {
     runtime.restore();
   }
@@ -513,7 +576,7 @@ function tapDigit(runtime, layout, digit) {
   runtime.touch(key.x + key.width / 2, key.y + key.height / 2);
 }
 
-function createProgressFixture() {
+function createProgressFixture(overrides = {}) {
   return {
     version: 1,
     activeRun: null,
@@ -544,6 +607,30 @@ function createProgressFixture() {
       campaignCompletedCount: 2,
       practiceCompletedCount: 4,
     },
+    ...overrides,
+  };
+}
+
+function createRunFixture(level, mode, options = {}) {
+  const completed = options.completed === true;
+
+  return {
+    mode,
+    levelId: level.id,
+    difficulty: level.difficulty,
+    ...(typeof options.trainingDifficulty === 'string'
+      ? { trainingDifficulty: options.trainingDifficulty }
+      : {}),
+    selected: { row: 0, col: 1 },
+    noteMode: false,
+    mistakes: 0,
+    completed,
+    cells: level.givens.map((row) =>
+      row.map((value) => ({
+        value,
+        notes: [],
+      })),
+    ),
   };
 }
 

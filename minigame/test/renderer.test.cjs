@@ -848,6 +848,17 @@ test('renderer draws a technique lesson without pressure copy', () => {
   assert.equal(/已掌握|完成率|正确率|学习失败/.test(text), false);
 });
 
+test('renderer hides normal tools in a technique lesson', () => {
+  const ctx = createMockCanvasContext();
+  const layout = createLayout(430, 932);
+  const technique = getTechniqueById('single-empty');
+  const state = createTechniqueState(technique);
+
+  renderTechniqueLesson(ctx, state, layout, { technique });
+
+  assert.equal(/草稿模式|重开|清除/.test(getDrawnText(ctx)), false);
+});
+
 test('renderer draws technique lesson success copy when completed', () => {
   const ctx = createMockCanvasContext();
   const layout = createLayout(430, 932);

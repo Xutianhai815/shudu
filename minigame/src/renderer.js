@@ -109,7 +109,6 @@ function renderTechniqueLesson(ctx, state, layout, options = {}) {
     drawTechniqueLessonPrompt(ctx, viewLayout, state, technique);
     drawTechniqueFocusHalo(ctx, viewLayout, technique);
     drawBoard(ctx, state, viewLayout);
-    drawTools(ctx, viewLayout);
     drawKeypad(ctx, viewLayout);
   } finally {
     ctx.restore();

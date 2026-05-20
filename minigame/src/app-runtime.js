@@ -508,6 +508,10 @@ function handleTechniqueLessonTouch(touch) {
   }
 
   if (hit.type === 'cell') {
+    if (!isCurrentTechniqueTargetCell(hit.row, hit.col)) {
+      return;
+    }
+
     techniqueState = selectCell(techniqueState, hit.row, hit.col);
     playSound('select');
     render();
@@ -531,6 +535,11 @@ function applyTechniqueDigit(previousState, digit) {
   }
 
   const { row, col } = previousState.selected;
+
+  if (!isCurrentTechniqueTargetCell(row, col)) {
+    return previousState;
+  }
+
   const selectedCell = previousState.cells[row] && previousState.cells[row][col];
 
   if (!selectedCell || selectedCell.fixed) {
@@ -556,6 +565,12 @@ function applyTechniqueDigit(previousState, digit) {
       }),
     ),
   };
+}
+
+function isCurrentTechniqueTargetCell(row, col) {
+  const target = currentTechnique && currentTechnique.lesson && currentTechnique.lesson.target;
+
+  return Boolean(target && target.row === row && target.col === col);
 }
 
 function startLevel(level, mode = 'campaign', options = {}) {
